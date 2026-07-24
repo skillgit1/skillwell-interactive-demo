@@ -1,0 +1,144 @@
+/* =====================================================================
+   THEME — THE SINGLE SOURCE OF DESIGN TRUTH
+   ---------------------------------------------------------------------
+   Every color, font, radius, and shadow in the app comes from here.
+   Components must never hardcode design values — they reference these
+   tokens via Tailwind utilities (bg-surface, text-ink, rounded-btn, ...)
+   or var(--token) in CSS.
+
+   VALUES SOURCE: "UI Unification" foundations + "DS Library — ETU
+   Learner Experience" (design system export, July 2026).
+     Product main accent:  Platform Blue #005E8D (DS buttons confirm)
+     Palette tokens:       Base/Sand #EFE8D7 · Oasis #00BF80 ·
+                           Ocean #004853 · Lime #A8E101 · Sky #0DC9FE ·
+                           ETU orange accent #F0781F
+     Neutral ramp:         cool-tinted (DS Color page)
+     Status (DS Chips):    Passed/Completed green · Not-Passed amber ·
+                           In-Progress pale Sky · Locked dark
+     Spacing scale:        4·8·12·16·20·24·32·40·48·56 (= Tailwind default)
+     Radii:                buttons 6px (DS Btns) · cards 8–12px
+     Typeface:             DM Sans (31 display / 20 / 16 / 15 body / 14 / 12)
+   ===================================================================== */
+
+@import "tailwindcss";
+@import "@fontsource-variable/dm-sans";
+
+@theme {
+  /* ---- Typography (DM Sans per design system) --------------------- */
+  --font-sans: "DM Sans Variable", "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "DM Sans Variable", "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ---- Brand palette tokens (verbatim from design system) --------- */
+  --color-sand: #efe8d7;           /* Base                       */
+  --color-oasis: #00bf80;          /* Oasis green                */
+  --color-ocean: #004853;          /* Ocean deep green           */
+  --color-lime: #a8e101;           /* Lime                       */
+  --color-sky: #0dc9fe;            /* Sky blue                   */
+  --color-accent-orange: #f0781f;  /* ETU heritage accent (DS)   */
+
+  /* ---- Neutral ramp (cool-tinted, from DS Library Color page) ----- */
+  --color-neutral-50: #f6f7f8;
+  --color-neutral-100: #eef0f1;
+  --color-neutral-200: #e1e5e6;
+  --color-neutral-300: #c9cfd1;
+  --color-neutral-400: #9aa4a8;
+  --color-neutral-500: #6c777b;
+  --color-neutral-600: #4b565a;
+  --color-neutral-700: #33403f;
+  --color-neutral-900: #16211f;
+
+  /* ---- Surfaces (near-white app chrome; Sand stays a palette token) */
+  --color-surface: #f6f7f8;        /* page background            */
+  --color-panel: #ffffff;          /* raised cards / overlays    */
+  --color-sunken: #eef0f1;         /* insets, track backgrounds  */
+
+  /* Deep panels / feature surfaces = Ocean                           */
+  --color-navy: #004853;
+  --color-navy-deep: #00333c;
+
+  /* ---- Lines / borders --------------------------------------------- */
+  --color-line: #e1e5e6;
+  --color-line-strong: #c9cfd1;
+
+  /* ---- Text (ink — cool neutral darks, per DS ramp) --------------- */
+  --color-ink: #16211f;            /* primary text               */
+  --color-ink-soft: #4b565a;       /* secondary text             */
+  --color-ink-muted: #808b8f;      /* tertiary / captions        */
+  --color-ink-inverse: #ffffff;    /* text on dark/primary fills */
+
+  /* ---- Primary = Platform Blue (product main accent) -------------- */
+  --color-primary: #005e8d;
+  --color-primary-hover: #004a70;
+  --color-primary-soft: #e6f0f6;   /* tinted background          */
+
+  /* ---- Semantic / status colours (from DS Library Chips) ----------- */
+  --color-success: #23a566;        /* Passed / Completed green   */
+  --color-success-soft: #dcf1e6;
+  --color-warning: #e2a13c;        /* Not Passed Yet amber       */
+  --color-warning-soft: #fbeecf;
+  --color-danger: #d43c3c;
+  --color-info: #005e8d;
+  --color-info-soft: #d9edfb;      /* In Progress pale Sky        */
+
+  /* ---- Learning-map node states (mapped to DS chip semantics) ------ */
+  --color-node-locked: #b7c0c1;
+  --color-node-available: #005e8d; /* Platform Blue              */
+  --color-node-current: #005e8d;
+  --color-node-complete: #23a566;  /* Passed/Completed green      */
+  --color-node-verified: #004853;  /* Ocean — tested-out skills  */
+  --color-edge: #ced5d7;           /* faded edges → locked nodes */
+  --color-edge-strong: #33403f;    /* dark arrows (active path)  */
+
+  /* Suggested-next-step popover card = Platform Blue                  */
+  --color-suggest: #005e8d;
+  --color-suggest-deep: #004a70;
+
+  /* ---- Chart palette (from brand tokens) --------------------------- */
+  --color-chart-1: #005e8d;
+  --color-chart-2: #00bf80;
+  --color-chart-3: #0dc9fe;
+  --color-chart-4: #a8e101;
+  --color-chart-5: #004853;
+  --color-chart-6: #e0930f;
+
+  /* ---- Radii (buttons sharpened per feedback) ---------------------- */
+  --radius-btn: 6px;               /* ALL buttons use rounded-btn */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* ---- Elevation ---------------------------------------------------- */
+  --shadow-card: 0 1px 2px rgba(16, 41, 46, 0.05), 0 4px 12px rgba(16, 41, 46, 0.07);
+  --shadow-overlay: 0 12px 40px rgba(16, 41, 46, 0.2);
+}
+
+/* ---- Base document styles (also token-driven) --------------------- */
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
