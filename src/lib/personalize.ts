@@ -29,21 +29,132 @@ export interface CheckQuestion {
   options: { label: string; correct?: boolean }[]
 }
 
-export const INDUSTRIES = [
+export interface Industry {
+  id: string
+  label: string
+  company: string
+  /** Higher Ed is a distinct buyer — rendered apart from the corporate grid. */
+  higherEd?: boolean
+}
+
+export const INDUSTRIES: Industry[] = [
+  { id: 'technology', label: 'Technology', company: 'Coreline Software' },
   { id: 'healthcare', label: 'Healthcare', company: 'Meridian Health' },
   { id: 'retail', label: 'Retail', company: 'Northgate Retail Group' },
-  { id: 'financial', label: 'Financial Services', company: 'Beacon Financial' },
-  { id: 'tech', label: 'Technology', company: 'Coreline Software' },
-  { id: 'highered', label: 'Higher Education', company: 'Lakeview University' },
-  { id: 'other', label: 'Something else', company: 'Atlas Industries' },
-] as const
+  { id: 'professional', label: 'Professional Services', company: 'Halcyon Advisory' },
+  { id: 'pharma', label: 'Pharma', company: 'Vantia Pharma' },
+  { id: 'other', label: 'Other', company: 'Atlas Industries' },
+]
 
-export const TRAININGS = [
-  { id: 'onboarding', label: 'Onboarding' },
-  { id: 'compliance', label: 'Compliance & Risk' },
-  { id: 'leadership', label: 'Leadership' },
-  { id: 'sales', label: 'Sales & Service' },
-] as const
+/** Rendered separately with an "Academic" badge — not a normal industry tile. */
+export const HIGHER_ED_INDUSTRY: Industry = {
+  id: 'highered',
+  label: 'Higher Education',
+  company: 'Lakeview University',
+  higherEd: true,
+}
+
+/**
+ * A selectable training. `engine` points at one of the four fully-authored
+ * content sets (leadership/onboarding/compliance/sales); new course types
+ * (DEI, higher-ed) reuse the closest engine and override the course
+ * name/description so the map reads correctly. Dedicated content for these
+ * can be authored later without changing this wiring.
+ */
+export interface TrainingOption {
+  id: string
+  label: string
+  engine: 'leadership' | 'onboarding' | 'compliance' | 'sales'
+  group?: string
+  course?: string
+  description?: string
+}
+
+export const CORPORATE_TRAININGS: TrainingOption[] = [
+  { id: 'leadership', label: 'Leadership', engine: 'leadership' },
+  { id: 'compliance', label: 'Compliance & Risk', engine: 'compliance' },
+  { id: 'sales', label: 'Sales & Customer Service', engine: 'sales' },
+  { id: 'onboarding', label: 'Onboarding', engine: 'onboarding' },
+  {
+    id: 'dei',
+    label: 'Diversity, Equity, and Inclusion',
+    engine: 'compliance',
+    group: 'People & Culture',
+    course: 'Diversity, Equity & Inclusion',
+    description:
+      "In this course, you'll build the awareness and everyday habits that make {company} a place where everyone can contribute and do their best work.",
+  },
+]
+
+/** Shown only when the visitor picks Higher Education — academic categories. */
+export const HIGHER_ED_TRAININGS: TrainingOption[] = [
+  {
+    id: 'he-mandatory',
+    label: 'Mandatory Training',
+    engine: 'compliance',
+    group: 'Compliance',
+    course: 'Mandatory Training',
+    description:
+      "In this path, students and staff complete {company}'s required training — Title IX, harassment prevention, and campus safety — in one adaptive experience.",
+  },
+  {
+    id: 'he-stem',
+    label: 'STEM',
+    engine: 'onboarding',
+    group: 'Academics',
+    course: 'STEM Foundations',
+    description:
+      "In this course, students build core skills across science, technology, engineering, and math with adaptive, mastery-based practice tailored to each learner at {company}.",
+  },
+  {
+    id: 'he-social',
+    label: 'Social Sciences',
+    engine: 'leadership',
+    group: 'Academics',
+    course: 'Social Sciences',
+    description:
+      "In this course, students explore human behavior, society, and research methods with adaptive learning tuned to where each student is at {company}.",
+  },
+  {
+    id: 'he-humanities',
+    label: 'Humanities',
+    engine: 'leadership',
+    group: 'Academics',
+    course: 'Humanities',
+    description:
+      "In this course, students engage with literature, history, and critical thinking through personalized, adaptive coursework at {company}.",
+  },
+  {
+    id: 'he-leadership',
+    label: 'Leadership & Soft Skills',
+    engine: 'leadership',
+    group: 'Career Readiness',
+    course: 'Leadership & Soft Skills',
+    description:
+      "In this course, students build the communication, collaboration, and leadership skills that employers and graduate programs value — adaptive to each learner at {company}.",
+  },
+]
+
+const ALL_TRAININGS = [...CORPORATE_TRAININGS, ...HIGHER_ED_TRAININGS]
+
+/** The training options to show for a given industry (Higher Ed → academic). */
+export function trainingsFor(industryId: string | null): TrainingOption[] {
+  return industryId === 'highered' ? HIGHER_ED_TRAININGS : CORPORATE_TRAININGS
+}
+
+export function findTraining(id: string | null): TrainingOption | undefined {
+  return ALL_TRAININGS.find((t) => t.id === id)
+}
+
+export function findIndustry(id: string | null): Industry | undefined {
+  if (id === 'highered') return HIGHER_ED_INDUSTRY
+  return INDUSTRIES.find((i) => i.id === id)
+}
+
+/** The content engine (fully-authored set) backing a training id. */
+export function engineFor(trainingId: string): string {
+  return findTraining(trainingId)?.engine ?? 'leadership'
+}
 
 interface TrainingContent {
   group: string
@@ -252,8 +363,8 @@ const TRAINING_CONTENT: Record<string, TrainingContent> = {
   },
 }
 
-function trainingFor(answers: IntroAnswers | null): TrainingContent {
-  return TRAINING_CONTENT[answers?.training ?? ''] ?? TRAINING_CONTENT.leadership
+function engineContentFor(trainingId: string | null): TrainingContent {
+  return TRAINING_CONTENT[engineFor(trainingId ?? '')] ?? TRAINING_CONTENT.leadership
 }
 
 /** Turn "Clinical_onboarding-manual v2.pdf" into "Clinical Onboarding Manual V2". */
@@ -273,32 +384,39 @@ export function uniqueSkillCount(content: MapContent): number {
 /** Apply intro answers to the base map content. Pure — returns a new object. */
 export function personalize(base: MapContent, answers: IntroAnswers | null): MapContent {
   if (!answers) return base
-  const industry = INDUSTRIES.find((i) => i.id === answers.industry) ?? INDUSTRIES[5]
-  const t = trainingFor(answers)
+  const industry = findIndustry(answers.industry) ?? INDUSTRIES[INDUSTRIES.length - 1]
+  const option = findTraining(answers.training)
+  const engine = engineContentFor(answers.training)
 
-  const course = answers.fileName ? cleanFileName(answers.fileName) : t.course
+  const baseCourse = option?.course ?? engine.course
+  const baseDesc = option?.description ?? engine.description
+  const group = option?.group ?? engine.group
+
+  const course = answers.fileName ? cleanFileName(answers.fileName) : baseCourse
   const description = answers.fileName
     ? `Generated automatically from “${answers.fileName}” — Skillwell extracted the skills inside and mapped them to an adaptive path for ${industry.company} using its skills taxonomy.`
-    : t.description.replace('{company}', industry.company)
+    : baseDesc.replace(/\{company\}/g, industry.company)
 
   return {
     scenario: {
       ...base.scenario,
       company: industry.company,
       course,
-      breadcrumb: ['Dashboard', t.group, course],
+      breadcrumb: ['Dashboard', group, course],
       description,
     },
     nodes: base.nodes.map((n) => ({
       ...n,
-      title: t.nodeTitles[n.id] ?? n.title,
+      // Sim nodes stay generic — the example sim is not topic-specific, so we
+      // never relabel them with the course topic. Content nodes get retitled.
+      title: n.type === 'sim' ? n.title : engine.nodeTitles[n.id] ?? n.title,
     })),
   }
 }
 
 /** Knowledge-check questions for the visitor's chosen training type. */
 export function getQuestions(answers: IntroAnswers | null): CheckQuestion[] {
-  return trainingFor(answers).questions
+  return engineContentFor(answers?.training ?? null).questions
 }
 
 /** Seat time saved by tested-out (verified) activities, in minutes. */

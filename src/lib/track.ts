@@ -14,14 +14,18 @@
 
 export type DemoEvent =
   | 'demo_opened'
-  | 'assessment_started'
-  | 'assessment_completed'
+  | 'intro_started'
+  | 'intro_industry_selected'
+  | 'intro_training_selected'
+  | 'intro_completed'
   | 'content_uploaded'
+  | 'content_flagged'
   | 'knowledge_check_started'
   | 'knowledge_check_answered'
   | 'knowledge_check_completed'
   | 'node_opened'
   | 'node_closed'
+  | 'insights_viewed'
   | 'sim_opened'
   | 'sim_closed'
   | 'sim_decision'
@@ -67,17 +71,32 @@ function hash(s: string): number {
 
 // --- consent gate + sink ----------------------------------------------
 
+type Sink = { capture: (e: string, p?: Props) => void }
+
 let trackingEnabled = false
-let posthog: { capture: (e: string, p?: Props) => void } | null = null
+let sink: Sink | null = null
+// Events fired before consent+sink are ready are buffered, then flushed on
+// consent so the session's early events (e.g. demo_opened) aren't lost — but
+// nothing is SENT before consent. Capped so a non-consenting session is bounded.
+const pending: [DemoEvent, Props][] = []
+const PENDING_MAX = 100
+
+function flush() {
+  if (!trackingEnabled || !sink) return
+  for (const [event, props] of pending) sink.capture(event, props)
+  pending.length = 0
+}
 
 /** Called from the consent banner once the visitor accepts. */
 export function enableTracking() {
   trackingEnabled = true
+  flush()
 }
 
-/** Phase 4: wire the real PostHog client here. */
-export function setAnalyticsSink(client: { capture: (e: string, p?: Props) => void }) {
-  posthog = client
+/** Wire the PostHog client here (see lib/posthog.ts). */
+export function setAnalyticsSink(client: Sink) {
+  sink = client
+  flush()
 }
 
 // --- the one function the whole app calls -----------------------------
@@ -91,15 +110,11 @@ export function track(event: DemoEvent, props: Props = {}) {
     variant: 'default',
   }
 
-  if (!trackingEnabled) {
-    // Pre-consent (or dev): visible but not sent anywhere.
-    console.debug('[track:pending]', event, enriched)
+  if (trackingEnabled && sink) {
+    sink.capture(event, enriched)
     return
   }
-
-  if (posthog) {
-    posthog.capture(event, enriched)
-  } else {
-    console.debug('[track]', event, enriched)
-  }
+  // Not yet consented / initialised — buffer (nothing leaves the browser).
+  if (pending.length < PENDING_MAX) pending.push([event, enriched])
+  console.debug('[track:pending]', event, enriched)
 }

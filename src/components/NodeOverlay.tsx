@@ -3,8 +3,11 @@ import { AnimatePresence, motion } from 'framer-motion'
 import type { MapNode } from '../lib/types'
 import type { CheckQuestion } from '../lib/personalize'
 import { track } from '../lib/track'
+import { getLesson } from '../lib/lessons'
 import { Icon } from './Icon'
 import { KnowledgeCheck } from './KnowledgeCheck'
+import { LessonContent } from './LessonContent'
+import { NodeSim } from './NodeSim'
 
 const TYPE_LABEL: Record<MapNode['type'], string> = {
   check: 'Knowledge check',
@@ -25,6 +28,9 @@ export function NodeOverlay({
   onClose,
   questions,
   onCheckComplete,
+  onNodeDone,
+  training,
+  company,
 }: {
   node: MapNode | null
   onClose: () => void
@@ -32,6 +38,12 @@ export function NodeOverlay({
   questions: CheckQuestion[]
   /** Fired when the knowledge check finishes; caller adapts the map. */
   onCheckComplete: (verifiedTags: string[]) => void
+  /** Fired when a sim/text showcase node is finished; advances the sequence. */
+  onNodeDone: (nodeId: string) => void
+  /** Chosen training id — selects the default lesson library. */
+  training: string
+  /** Personalized company name for {company} interpolation. */
+  company: string
 }) {
   const openedAt = useRef<number>(0)
 
@@ -73,7 +85,9 @@ export function NodeOverlay({
             onClick={close}
           />
           <motion.div
-            className="relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-[var(--shadow-overlay)]"
+            className={`relative z-10 flex max-h-[88vh] w-full flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-[var(--shadow-overlay)] ${
+              node.type === 'content' ? 'max-w-3xl' : 'max-w-2xl'
+            }`}
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
@@ -105,32 +119,63 @@ export function NodeOverlay({
               </button>
             </header>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6">
-              {node.type === 'check' && node.state !== 'completed' ? (
-                <KnowledgeCheck
-                  questions={questions}
-                  onFinish={(tags) => {
-                    onCheckComplete(tags)
-                    onClose()
-                  }}
-                />
-              ) : node.type === 'check' ? (
-                <div className="grid place-items-center rounded-xl bg-node-complete/10 py-12 text-center">
-                  <p className="text-sm font-semibold text-node-complete">
-                    Knowledge check complete — your path has been adapted.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm leading-relaxed text-ink-soft">{node.blurb}</p>
-                  <div className="mt-6 grid place-items-center rounded-xl border border-dashed border-line-strong bg-sunken/50 py-16 text-center">
-                    <p className="text-sm font-medium text-ink-muted">
-                      {TYPE_LABEL[node.type]} experience builds here in Phase 2
+            {node.type === 'content' ? (
+              // full-bleed: LessonContent owns its own rail, scroll, and footer
+              <LessonContent
+                lesson={getLesson(training, node.id, company, node.title)}
+                onNext={() => {
+                  onNodeDone(node.id)
+                  close()
+                }}
+              />
+            ) : (
+              <div className="flex-1 overflow-y-auto px-6 py-6">
+                {node.type === 'check' && node.state !== 'completed' ? (
+                  <KnowledgeCheck
+                    questions={questions}
+                    onFinish={(tags) => {
+                      onCheckComplete(tags)
+                      onClose()
+                    }}
+                  />
+                ) : node.type === 'check' ? (
+                  <div className="grid place-items-center rounded-xl bg-node-complete/10 py-12 text-center">
+                    <p className="text-sm font-semibold text-node-complete">
+                      Knowledge check complete — your path has been adapted.
                     </p>
                   </div>
-                </>
-              )}
-            </div>
+                ) : node.type === 'sim' ? (
+                  <NodeSim
+                    node={node}
+                    training={training}
+                    onOpened={() => {
+                      onNodeDone(node.id)
+                      close()
+                    }}
+                  />
+                ) : node.type === 'cta' ? (
+                  <div className="text-center">
+                    <p className="text-[15px] leading-relaxed text-ink-soft">{node.blurb}</p>
+                    <button
+                      type="button"
+                      onClick={() => track('cta_clicked', { cta_id: 'node_book_demo' })}
+                      className="mt-5 rounded-btn bg-primary px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+                    >
+                      Book a Full Demo
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm leading-relaxed text-ink-soft">{node.blurb}</p>
+                    <div className="mt-6 grid place-items-center rounded-xl border border-dashed border-line-strong bg-sunken/50 py-16 text-center">
+                      <p className="text-sm font-medium text-ink-muted">
+                        {TYPE_LABEL[node.type]} experience builds here next
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

@@ -2,20 +2,30 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { track } from './lib/track'
 import type { MapContent, NodeState } from './lib/types'
-import { personalize, getQuestions, minutesSaved, uniqueSkillCount, INDUSTRIES, TRAININGS } from './lib/personalize'
+import { personalize, getQuestions, minutesSaved, uniqueSkillCount, findIndustry, findTraining } from './lib/personalize'
 import type { IntroAnswers } from './lib/personalize'
 import { LearningMap } from './components/LearningMap'
 import { IntroFlow } from './components/IntroFlow'
+import { AutoInsightsReport } from './components/AutoInsightsReport'
+import { restoreConsent } from './lib/posthog'
 import { Logo } from './components/Logo'
 import rawMap from './content/map.json'
 
 const baseMap = rawMap as unknown as MapContent
 const INTRO_KEY = 'sw_intro_answers'
 
-/** Early-path nodes the knowledge check can test you out of, in path order.
- *  A correct answer verifies EVERY node sharing that skillTag (e.g. one
- *  fundamentals answer tests out of both foundations activities). */
-const SKILL_NODE_ORDER = ['principles', 'terminology', 'styles', 'communication'] as const
+/** The guided 3-node preview, in order: knowledge check → simulation → a
+ *  text lesson. These are the ONLY openable nodes; everything else on the
+ *  map is visible (to show scale) but locked. Finishing all three triggers
+ *  the "book a call" conversion prompt. */
+const SHOWCASE = ['knowledge-check', 'principles', 'communication'] as const
+
+/** Nodes the knowledge check can test you out of (must NOT be showcase
+ *  nodes, so the guided text step is never skipped). */
+const SKILL_NODE_ORDER = ['terminology', 'styles'] as const
+
+/** Contact / book-a-demo link (UTM'd for this preview). */
+const BOOK_CALL_URL = 'https://hubs.ly/Q04rBJD30'
 
 type IntroState =
   | { phase: 'active' }
@@ -37,12 +47,26 @@ export default function App() {
   const initial = useMemo(loadIntroState, [])
   const [intro, setIntro] = useState<IntroState>(initial.intro)
   const [banner, setBanner] = useState<Banner>(initial.banner)
-  /** Runtime node-state overrides from the knowledge check. */
+  /** Runtime node-state overrides from the knowledge check (tested-out skills). */
   const [overrides, setOverrides] = useState<Record<string, NodeState> | null>(null)
+  /** Progress through the guided 3-node showcase (0..3). */
+  const [showcaseStep, setShowcaseStep] = useState(0)
+  /** After all 3 nodes: show the admin insights report, then the CTA. */
+  const [postPreview, setPostPreview] = useState<'insights' | 'convert' | null>(null)
 
   useEffect(() => {
+    // If this browser consented on a prior visit, re-arm tracking before the
+    // first event (the intro is session-gated and may not re-render).
+    restoreConsent()
     track('demo_opened', { referrer: document.referrer || 'direct' })
   }, [])
+
+  // Banners are one-time nudges — auto-dismiss so they never clutter.
+  useEffect(() => {
+    if (!banner) return
+    const id = setTimeout(() => setBanner(null), 7000)
+    return () => clearTimeout(id)
+  }, [banner])
 
   const finishIntro = useCallback((answers: IntroAnswers | null) => {
     try {
@@ -62,35 +86,54 @@ export default function App() {
     }
     setOverrides(null)
     setBanner(null)
+    setShowcaseStep(0)
+    setPostPreview(null)
     setIntro({ phase: 'active' })
   }, [])
 
-  /** The learner-side adaptivity moment: apply knowledge-check results. */
-  const handleCheckComplete = useCallback((verifiedTags: string[]) => {
-    const next: Record<string, NodeState> = { 'knowledge-check': 'completed' }
-    let current: string | null = null
-    for (const id of SKILL_NODE_ORDER) {
-      const node = baseMap.nodes.find((n) => n.id === id)
-      const verified = node?.skillTags.some((t) => verifiedTags.includes(t)) ?? false
-      if (verified) {
-        next[id] = 'verified'
-      } else {
-        next[id] = current === null ? 'current' : 'available'
-        if (current === null) current = id
-      }
-    }
-    if (current === null) next.expectations = 'current'
-    setOverrides(next)
-    setBanner('adapted')
+  /** Advance the guided sequence; after the 3rd node, open the admin report. */
+  const handleNodeDone = useCallback((nodeId: string) => {
+    setShowcaseStep((s) => {
+      if (SHOWCASE[s] !== nodeId) return s
+      const next = s + 1
+      if (next >= SHOWCASE.length) setPostPreview('insights')
+      return next
+    })
   }, [])
+
+  /** The learner-side adaptivity moment: apply knowledge-check results, then
+   *  advance the guided sequence to the simulation. */
+  const handleCheckComplete = useCallback(
+    (verifiedTags: string[]) => {
+      const next: Record<string, NodeState> = {}
+      for (const id of SKILL_NODE_ORDER) {
+        const node = baseMap.nodes.find((n) => n.id === id)
+        if (node?.skillTags.some((t) => verifiedTags.includes(t))) next[id] = 'verified'
+      }
+      setOverrides(next)
+      setBanner('adapted')
+      handleNodeDone('knowledge-check')
+    },
+    [handleNodeDone],
+  )
 
   const answers = intro.phase === 'done' ? intro.answers : null
 
   const map = useMemo(() => {
     const personalized = personalize(baseMap, answers)
-    const nodes = personalized.nodes.map((n) =>
-      overrides?.[n.id] ? { ...n, state: overrides[n.id] } : n,
-    )
+    const nodes = personalized.nodes.map((n) => {
+      const idx = SHOWCASE.indexOf(n.id as (typeof SHOWCASE)[number])
+      let state: NodeState
+      if (idx !== -1) {
+        // Guided showcase node: completed / current / not-yet-reached (locked).
+        state = idx < showcaseStep ? 'completed' : idx === showcaseStep ? 'current' : 'locked'
+      } else if (overrides?.[n.id]) {
+        state = overrides[n.id] // tested-out skill from the check
+      } else {
+        state = 'locked' // visible for scale, but not part of the 3-node preview
+      }
+      return { ...n, state }
+    })
     const total = nodes.reduce((s, n) => s + n.estMinutes, 0)
     const earned = nodes
       .filter((n) => n.state === 'completed' || n.state === 'verified')
@@ -102,14 +145,22 @@ export default function App() {
       },
       nodes,
     }
-  }, [answers, overrides])
+  }, [answers, overrides, showcaseStep])
+
+  /** Showcase nodes reached so far are openable; everything else is locked. */
+  const openableIds = useMemo(() => SHOWCASE.slice(0, showcaseStep + 1) as string[], [showcaseStep])
+
+  const openBookCall = useCallback((where: string) => {
+    track('cta_clicked', { cta_id: where })
+    window.open(BOOK_CALL_URL, '_blank', 'noopener,noreferrer')
+  }, [])
 
   const questions = useMemo(() => getQuestions(answers), [answers])
   const { scenario } = map
   const introActive = intro.phase === 'active'
 
-  const industryLabel = INDUSTRIES.find((i) => i.id === answers?.industry)?.label
-  const trainingLabel = TRAININGS.find((t) => t.id === answers?.training)?.label
+  const industryLabel = findIndustry(answers?.industry ?? null)?.label
+  const trainingLabel = findTraining(answers?.training ?? null)?.label
   const verifiedCount = map.nodes.filter((n) => n.state === 'verified').length
   const saved = minutesSaved(map)
 
@@ -121,7 +172,7 @@ export default function App() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => track('cta_clicked', { cta_id: 'header_book_demo' })}
+            onClick={() => openBookCall('header_book_demo')}
             className="rounded-btn bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
           >
             Book a Full Demo
@@ -186,7 +237,7 @@ export default function App() {
                   Personalize again
                 </button>
                 <span className="text-xs text-ink-muted">
-                  Drag to explore · click any node
+                  {showcaseStep >= 3 ? 'Preview complete' : 'Follow the highlighted step'}
                 </span>
               </div>
             </div>
@@ -240,13 +291,100 @@ export default function App() {
               content={map}
               questions={questions}
               onCheckComplete={handleCheckComplete}
+              training={answers?.training ?? 'leadership'}
+              openableIds={openableIds}
+              onNodeDone={handleNodeDone}
             />
           </section>
         </main>
 
-        {/* Intro flow overlay */}
+        {/* Intro flow overlay — consent is granted here on first interaction
+            (see the fine print on the welcome card). */}
         {introActive && <IntroFlow onDone={finishIntro} />}
+
+        {/* Step 4: admin auto-insights report */}
+        <AnimatePresence>
+          {!introActive && postPreview === 'insights' && (
+            <AutoInsightsReport
+              company={scenario.company}
+              course={scenario.course}
+              training={answers?.training ?? 'leadership'}
+              onContinue={() => setPostPreview('convert')}
+              onClose={() => setPostPreview('convert')}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Step 5: conversion prompt */}
+        <AnimatePresence>
+          {!introActive && postPreview === 'convert' && (
+            <ConversionModal
+              onBook={() => openBookCall('preview_complete')}
+              onDismiss={() => setPostPreview(null)}
+            />
+          )}
+        </AnimatePresence>
       </div>
+    </div>
+  )
+}
+
+function ConversionModal({
+  onBook,
+  onDismiss,
+}: {
+  onBook: () => void
+  onDismiss: () => void
+}) {
+  // Ignore any click in the first moment so the click that opened this modal
+  // (e.g. the report's "continue" button) can't immediately dismiss it.
+  const [armed, setArmed] = useState(false)
+  useEffect(() => {
+    const id = setTimeout(() => setArmed(true), 350)
+    return () => clearTimeout(id)
+  }, [])
+  const dismiss = () => armed && onDismiss()
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-navy-deep/40 backdrop-blur-sm" onClick={dismiss} />
+      <motion.div
+        className="relative z-10 w-full max-w-md rounded-2xl border border-line bg-panel p-8 text-center shadow-[var(--shadow-overlay)]"
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      >
+        <div className="mx-auto grid size-12 place-items-center rounded-full bg-primary-soft text-primary">
+          <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        </div>
+        <h2 className="mt-4 font-display text-2xl font-bold tracking-tight text-ink">
+          You've seen the learner experience — and the data behind it
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+          A knowledge check, an immersive simulation, an adaptive lesson, and the
+          auto-insights your L&amp;D team gets. This preview is a small slice of what your
+          team can build. See the full platform with a quick call.
+        </p>
+        <button
+          type="button"
+          onClick={onBook}
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-btn bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+        >
+          Book a call with our team
+          <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M7 17L17 7M17 7H8M17 7v9" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="mt-3 text-xs font-medium text-ink-muted transition-colors hover:text-ink"
+        >
+          Keep exploring the preview
+        </button>
+      </motion.div>
     </div>
   )
 }

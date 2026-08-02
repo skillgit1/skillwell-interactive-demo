@@ -1,14 +1,14 @@
 /**
- * Skillwell logo — official brand asset pulled from skillwell.com
- * (/public/skillwell-logo.png). To swap for another variant (e.g. a
- * horizontal lockup), replace the file in /public.
+ * Skillwell logo — official horizontal wordmark (Ocean Green #004853),
+ * from /public/skillwell-logo-horizontal.svg. To swap variants, replace
+ * that file (or point the src elsewhere).
  */
 export function Logo({ className }: { className?: string }) {
   return (
     <img
-      src="/skillwell-logo.png"
+      src="/skillwell-logo-horizontal.svg"
       alt="Skillwell"
-      className={`h-12 w-auto ${className ?? ''}`}
+      className={`h-5 w-auto ${className ?? ''}`}
     />
   )
 }

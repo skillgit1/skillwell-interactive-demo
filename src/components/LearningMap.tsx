@@ -30,10 +30,19 @@ export function LearningMap({
   content,
   questions,
   onCheckComplete,
+  training,
+  openableIds,
+  onNodeDone,
 }: {
   content: MapContent
   questions: CheckQuestion[]
   onCheckComplete: (verifiedTags: string[]) => void
+  /** Chosen training id — selects the default lesson library. */
+  training: string
+  /** Ids of nodes the visitor may open (the guided showcase so far). */
+  openableIds: string[]
+  /** Signals a showcase node was finished, so the sequence advances. */
+  onNodeDone: (nodeId: string) => void
 }) {
   const { nodes } = content
   const byId = useMemo(() => Object.fromEntries(nodes.map((n) => [n.id, n])), [nodes])
@@ -66,11 +75,8 @@ export function LearningMap({
   }, [nodes, byId])
 
   function handleNodeClick(node: MapNode) {
-    if (node.state === 'locked') {
-      track('node_opened', { node_id: node.id, node_type: node.type, stage: node.stage, locked: true })
-      setOpenNode(node) // still show the overlay; it explains it's locked via blurb
-      return
-    }
+    // Only the guided showcase nodes are openable; the rest are preview-only.
+    if (!openableIds.includes(node.id)) return
     setOpenNode(node)
   }
 
@@ -176,6 +182,9 @@ export function LearningMap({
         onClose={() => setOpenNode(null)}
         questions={questions}
         onCheckComplete={onCheckComplete}
+        onNodeDone={onNodeDone}
+        training={training}
+        company={content.scenario.company}
       />
     </div>
   )

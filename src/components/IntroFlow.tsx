@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { INDUSTRIES, TRAININGS } from '../lib/personalize'
+import { INDUSTRIES, HIGHER_ED_INDUSTRY, trainingsFor, findIndustry, findTraining } from '../lib/personalize'
 import type { IntroAnswers } from '../lib/personalize'
 import { track } from '../lib/track'
+import { grantConsent } from '../lib/posthog'
+import { moderateUpload } from '../lib/moderateUpload'
 import { Icon } from './Icon'
 
-type Step = 'welcome' | 'industry' | 'training' | 'upload' | 'building'
+type Step = 'welcome' | 'industry' | 'training' | 'upload' | 'flagged' | 'building'
 
 const STEPS: Step[] = ['welcome', 'industry', 'training', 'upload']
 
@@ -34,6 +36,7 @@ export function IntroFlow({
   const [fileName, setFileName] = useState<string | null>(null)
   const [stage, setStage] = useState(0)
   const [dragOver, setDragOver] = useState(false)
+  const [flagMessage, setFlagMessage] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
 
   // Build beat: staged messages when a file was provided, quick otherwise.
@@ -57,33 +60,47 @@ export function IntroFlow({
   }, [step, stage, fileName, industry, training, onDone])
 
   const skip = () => {
-    track('assessment_completed', { skipped: true })
+    // Entering the demo (even via skip) is the consent action — see the
+    // fine-print disclaimer on the welcome card.
+    grantConsent()
+    track('intro_completed', { skipped: true })
     onDone(null)
   }
 
+  // human-readable labels for analytics (so the dashboard shows words, not ids)
+  const industryLabel = (id: string | null) => findIndustry(id)?.label ?? 'Unknown'
+  const trainingLabel = (id: string | null) => findTraining(id)?.label ?? 'Unknown'
+
+  const completeProps = (uploaded: boolean) => ({
+    skipped: false,
+    industry: industry ?? 'other',
+    industry_label: industryLabel(industry),
+    training: training ?? 'leadership',
+    training_label: trainingLabel(training),
+    uploaded_file: uploaded,
+  })
+
   const acceptFile = (f: File | undefined | null) => {
     if (!f) return
+    const fileType = f.name.split('.').pop()?.toLowerCase() ?? 'unknown'
+
+    // Moderation guard — block explicit/malware uploads, allow legit training.
+    const verdict = moderateUpload(f)
+    if (!verdict.ok) {
+      track('content_flagged', { category: verdict.category, file_type: fileType })
+      setFlagMessage(verdict.message)
+      setStep('flagged')
+      return
+    }
+
     setFileName(f.name)
-    track('content_uploaded', {
-      ext: f.name.split('.').pop()?.toLowerCase() ?? 'unknown',
-      size_kb: Math.round(f.size / 1024),
-    })
-    track('assessment_completed', {
-      industry: industry ?? 'other',
-      training: training ?? 'leadership',
-      has_file: true,
-      skipped: false,
-    })
+    track('content_uploaded', { file_type: fileType, file_size_kb: Math.round(f.size / 1024) })
+    track('intro_completed', completeProps(true))
     setStep('building')
   }
 
   const finishWithoutFile = () => {
-    track('assessment_completed', {
-      industry: industry ?? 'other',
-      training: training ?? 'leadership',
-      has_file: false,
-      skipped: false,
-    })
+    track('intro_completed', completeProps(false))
     setStep('building')
   }
 
@@ -103,22 +120,25 @@ export function IntroFlow({
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
             <p className="text-xs font-bold uppercase tracking-widest text-primary">
-              Skillwell demo experience
+              Skillwell Preview Demo Experience
             </p>
             <h2 className="mt-3 font-display text-2xl font-bold tracking-tight text-ink">
               Any industry. Any training. Adapted to every learner.
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-              In under 5 minutes you'll experience a live learning map, open a
-              simulation, and see the skills data behind it. No login, no forms.
+              In under 5 minutes, you'll see how Skillwell creates unique training
+              content, a live learning map, realistic simulations, and tracks the
+              learner skills data behind it.
             </p>
             <p className="mt-2 text-sm font-medium text-ink">
-              Tell us what to build — two quick taps.
+              No account needed — just an open preview.
             </p>
             <button
               type="button"
               onClick={() => {
-                track('assessment_started', {})
+                // Starting the demo is the consent action — see the fine print below.
+                grantConsent()
+                track('intro_started', {})
                 setStep('industry')
               }}
               className="mt-6 w-full rounded-btn bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
@@ -130,20 +150,24 @@ export function IntroFlow({
               onClick={skip}
               className="mt-3 text-xs font-medium text-ink-muted transition-colors hover:text-ink"
             >
-              Skip — just show me the map
+              Skip to the example demo
             </button>
+
+            {/* Consent as fine print — continuing (either button) is acceptance. */}
+            <p className="mx-auto mt-5 max-w-sm border-t border-line pt-3 text-[11px] leading-relaxed text-ink-muted">
+              By continuing, you agree to our use of cookies and session analytics
+              to understand how this preview is used and make it better. No personal
+              account is created.
+            </p>
           </motion.div>
         )}
 
         {step === 'industry' && (
-          <QuestionCard
+          <IndustryCard
             key="industry"
             cardClass={card}
-            kicker="Question 1 of 2"
-            question="What industry are you in?"
-            subcopy="Skillwell powers learning in every industry — pick yours and we'll build the demo around it."
-            options={INDUSTRIES.map((i) => ({ id: i.id, label: i.label }))}
             onPick={(id) => {
+              track('intro_industry_selected', { industry: id, industry_label: industryLabel(id) })
               setIndustry(id)
               setStep('training')
             }}
@@ -156,10 +180,19 @@ export function IntroFlow({
             key="training"
             cardClass={card}
             kicker="Question 2 of 2"
-            question="What kind of training do you want to see?"
-            subcopy="If you can teach it, Skillwell can build and adapt it — these are just four favorites."
-            options={TRAININGS.map((t) => ({ id: t.id, label: t.label }))}
+            question={
+              industry === 'highered'
+                ? 'Which course do you want to see?'
+                : 'What kind of training do you want to see?'
+            }
+            subcopy={
+              industry === 'highered'
+                ? 'Common courses institutions run on Skillwell — pick one to preview.'
+                : 'If you can teach it, Skillwell can build and adapt it — these are just a few favorites.'
+            }
+            options={trainingsFor(industry).map((t) => ({ id: t.id, label: t.label }))}
             onPick={(id) => {
+              track('intro_training_selected', { training: id, training_label: trainingLabel(id) })
               setTraining(id)
               setStep('upload')
             }}
@@ -231,6 +264,46 @@ export function IntroFlow({
               className="mt-4 text-xs font-medium text-ink-muted transition-colors hover:text-ink"
             >
               No file handy — build me a sample course
+            </button>
+          </motion.div>
+        )}
+
+        {step === 'flagged' && (
+          <motion.div
+            key="flagged"
+            className={card}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            <div className="mx-auto grid size-12 place-items-center rounded-full bg-warning-soft text-warning">
+              <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 9v4m0 4h.01M10.3 3.86l-8.06 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.76-3.14l-8.06-14a2 2 0 0 0-3.4 0Z" />
+              </svg>
+            </div>
+            <h2 className="mt-4 font-display text-xl font-bold tracking-tight text-ink">
+              Let's use an example instead
+            </h2>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
+              {flagMessage}
+            </p>
+            <button
+              type="button"
+              onClick={finishWithoutFile}
+              className="mt-6 w-full rounded-btn bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+            >
+              See an example learning map
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStep('upload')
+                setTimeout(() => fileInput.current?.click(), 50)
+              }}
+              className="mt-3 text-xs font-medium text-ink-muted transition-colors hover:text-ink"
+            >
+              Upload a different file
             </button>
           </motion.div>
         )}
@@ -352,6 +425,82 @@ function QuestionCard({
           </button>
         ))}
       </div>
+      <button
+        type="button"
+        onClick={onSkip}
+        className="mt-4 text-xs font-medium text-ink-muted transition-colors hover:text-ink"
+      >
+        Skip — just show me the map
+      </button>
+    </motion.div>
+  )
+}
+
+/** Industry step — corporate grid, plus Higher Education set apart with a badge. */
+function IndustryCard({
+  cardClass,
+  onPick,
+  onSkip,
+}: {
+  cardClass: string
+  onPick: (id: string) => void
+  onSkip: () => void
+}) {
+  return (
+    <motion.div
+      className={cardClass}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+    >
+      <p className="text-xs font-bold uppercase tracking-widest text-primary">Question 1 of 2</p>
+      <h2 className="mt-3 font-display text-xl font-bold tracking-tight text-ink">
+        What industry are you in?
+      </h2>
+      <p className="mt-2 text-xs leading-relaxed text-ink-muted">
+        Skillwell powers learning in every industry — pick yours and we'll build the demo around it.
+      </p>
+
+      <div className="mt-5 grid grid-cols-2 gap-2.5">
+        {INDUSTRIES.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => onPick(o.id)}
+            className="rounded-btn border border-line bg-panel px-4 py-3.5 text-sm font-semibold text-ink transition-all hover:-translate-y-0.5 hover:border-primary hover:bg-primary-soft hover:text-primary"
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Higher Ed — set apart as a distinct buyer, not a normal industry tile */}
+      <div className="mt-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+        <span className="h-px flex-1 bg-line" />
+        Academic institution?
+        <span className="h-px flex-1 bg-line" />
+      </div>
+      <button
+        type="button"
+        onClick={() => onPick(HIGHER_ED_INDUSTRY.id)}
+        className="mt-3 flex w-full items-center gap-3 rounded-btn border border-ocean/30 bg-ocean/5 px-4 py-3.5 text-left transition-all hover:-translate-y-0.5 hover:border-ocean hover:bg-ocean/10"
+      >
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-ocean text-white">
+          <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 10L12 5 2 10l10 5 10-5Z" />
+            <path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5" />
+          </svg>
+        </span>
+        <span className="flex-1">
+          <span className="block text-sm font-bold text-ink">{HIGHER_ED_INDUSTRY.label}</span>
+          <span className="block text-xs text-ink-muted">Colleges & online universities</span>
+        </span>
+        <span className="rounded-full bg-ocean/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-ocean">
+          Academic
+        </span>
+      </button>
+
       <button
         type="button"
         onClick={onSkip}
