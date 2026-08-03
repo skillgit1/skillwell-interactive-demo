@@ -361,10 +361,317 @@ const TRAINING_CONTENT: Record<string, TrainingContent> = {
       },
     ],
   },
+
+  // ===== Dedicated topic content (keyed by training id) ====================
+  // These topics used to borrow an engine above. They now carry their own
+  // node titles and knowledge-check questions so the map reads as built for
+  // the visitor's exact course. Lesson bodies live in lessons.ts.
+
+  dei: {
+    group: 'People & Culture',
+    course: 'Diversity, Equity & Inclusion',
+    description:
+      "In this course, you'll build the awareness and everyday habits that make {company} a place where everyone can contribute and do their best work.",
+    nodeTitles: {
+      principles: 'Why Inclusion Matters',
+      terminology: 'Key Terms in DEI',
+      styles: 'Understanding Bias',
+      communication: 'Inclusive Conversations',
+      'practice-quiz': 'Scenario Practice: Everyday Moments',
+      'feedback-sim': 'Responding to Bias Sim',
+      expectations: 'Being an Active Ally',
+      milestone: 'Checkpoint: Inclusive Habits',
+      'customer-king': 'Equity in Decisions',
+      'customer-sim': 'Difficult Conversation Sim',
+      'case-study': 'Case Study: A More Inclusive Team',
+      'final-assessment': 'Verify: Inclusion Essentials',
+    },
+    questions: [
+      {
+        q: 'What is the goal of an inclusive workplace?',
+        skillTag: 'fundamentals',
+        options: [
+          { label: 'Everyone can contribute and do their best work', correct: true },
+          { label: 'Everyone thinks the same way' },
+          { label: 'Disagreement is avoided at all costs' },
+        ],
+      },
+      {
+        q: 'A colleague is repeatedly talked over in meetings. A good response is…',
+        skillTag: 'leadership',
+        options: [
+          { label: 'Invite them back in: “I want to hear the rest of your point”', correct: true },
+          { label: 'Say nothing, since it is not your place' },
+          { label: 'Bring it up as a joke afterward' },
+        ],
+      },
+      {
+        q: 'A coworker says a comment made them uncomfortable. You…',
+        skillTag: 'communication',
+        options: [
+          { label: 'Listen, thank them, and reflect on it', correct: true },
+          { label: 'Explain why they misunderstood' },
+          { label: 'Change the subject quickly' },
+        ],
+      },
+    ],
+  },
+
+  'he-mandatory': {
+    group: 'Compliance',
+    course: 'Mandatory Training',
+    description:
+      "In this path, students and staff complete {company}'s required training, including Title IX, harassment prevention, and campus safety, in one adaptive experience.",
+    nodeTitles: {
+      principles: 'Your Rights and Responsibilities',
+      terminology: 'Key Terms and Definitions',
+      styles: 'Recognizing Prohibited Conduct',
+      communication: 'How to Report',
+      'practice-quiz': 'Scenario Practice: What Would You Do',
+      'feedback-sim': 'Reporting Conversation Sim',
+      expectations: 'Supporting Someone Who Discloses',
+      milestone: 'Checkpoint: Campus Safety Basics',
+      'customer-king': 'Confidentiality and Privacy',
+      'customer-sim': 'Support Conversation Sim',
+      'case-study': 'Case Study: A Report Done Right',
+      'final-assessment': 'Verify: Mandatory Training',
+    },
+    questions: [
+      {
+        q: 'What does Title IX primarily protect people from?',
+        skillTag: 'fundamentals',
+        options: [
+          { label: 'Sex-based discrimination in education', correct: true },
+          { label: 'Late tuition payments' },
+          { label: 'Parking violations' },
+        ],
+      },
+      {
+        q: 'You think a fellow student may have experienced harassment. A responsible first step is…',
+        skillTag: 'leadership',
+        options: [
+          { label: 'Share the campus reporting and support resources', correct: true },
+          { label: 'Investigate it yourself' },
+          { label: 'Assume someone else will help' },
+        ],
+      },
+      {
+        q: 'Someone discloses an incident to you. You should…',
+        skillTag: 'communication',
+        options: [
+          { label: 'Listen without judgment and respect their privacy', correct: true },
+          { label: 'Repeat it widely so it gets handled' },
+          { label: 'Tell them to forget about it' },
+        ],
+      },
+    ],
+  },
+
+  'he-stem': {
+    group: 'Academics',
+    course: 'STEM Foundations',
+    description:
+      'In this course, students build core skills across science, technology, engineering, and math with adaptive, mastery-based practice tuned to each learner at {company}.',
+    nodeTitles: {
+      principles: 'How Scientists Think',
+      terminology: 'Core Concepts and Notation',
+      styles: 'Reasoning with Numbers',
+      communication: 'Explaining Your Work',
+      'practice-quiz': 'Practice Set: Problem Solving',
+      'feedback-sim': 'Lab Partner Sim',
+      expectations: 'Designing an Experiment',
+      milestone: 'Checkpoint: Foundations Secured',
+      'customer-king': 'Interpreting Data',
+      'customer-sim': 'Peer Review Sim',
+      'case-study': 'Case Study: From Question to Finding',
+      'final-assessment': 'Verify: STEM Foundations',
+    },
+    questions: [
+      {
+        q: 'What is the first step in the scientific method?',
+        skillTag: 'fundamentals',
+        options: [
+          { label: 'Ask a clear, testable question', correct: true },
+          { label: 'Publish the results' },
+          { label: 'Assume the conclusion' },
+        ],
+      },
+      {
+        q: 'Your experiment gives an unexpected result. The best response is…',
+        skillTag: 'leadership',
+        options: [
+          { label: 'Check your method, then investigate why', correct: true },
+          { label: 'Ignore the result' },
+          { label: 'Change the data to fit' },
+        ],
+      },
+      {
+        q: 'The clearest way to present a finding is to…',
+        skillTag: 'communication',
+        options: [
+          { label: 'Show the evidence and explain what it means', correct: true },
+          { label: 'State the conclusion with no support' },
+          { label: 'Use as much jargon as possible' },
+        ],
+      },
+    ],
+  },
+
+  'he-social': {
+    group: 'Academics',
+    course: 'Social Sciences',
+    description:
+      'In this course, students explore human behavior, society, and research methods with adaptive learning tuned to where each student is at {company}.',
+    nodeTitles: {
+      principles: 'How Social Scientists Think',
+      terminology: 'Key Concepts and Theories',
+      styles: 'Research Methods',
+      communication: 'Making an Argument from Evidence',
+      'practice-quiz': 'Practice: Reading the Evidence',
+      'feedback-sim': 'Seminar Discussion Sim',
+      expectations: 'Analyzing Society and Systems',
+      milestone: 'Checkpoint: Thinking Like a Researcher',
+      'customer-king': 'Interpreting Human Behavior',
+      'customer-sim': 'Interview Practice Sim',
+      'case-study': 'Case Study: A Study Under the Microscope',
+      'final-assessment': 'Verify: Social Sciences',
+    },
+    questions: [
+      {
+        q: 'What do the social sciences study?',
+        skillTag: 'fundamentals',
+        options: [
+          { label: 'Human behavior, society, and how people interact', correct: true },
+          { label: 'Only historical dates' },
+          { label: 'The physical properties of matter' },
+        ],
+      },
+      {
+        q: 'A study shows two things happen together. You can conclude…',
+        skillTag: 'leadership',
+        options: [
+          { label: 'They are correlated, which does not prove one caused the other', correct: true },
+          { label: 'One definitely caused the other' },
+          { label: 'Nothing can ever be learned' },
+        ],
+      },
+      {
+        q: 'A strong social science argument relies on…',
+        skillTag: 'communication',
+        options: [
+          { label: 'Evidence and sound reasoning', correct: true },
+          { label: 'Personal opinion alone' },
+          { label: 'The loudest voice in the room' },
+        ],
+      },
+    ],
+  },
+
+  'he-humanities': {
+    group: 'Academics',
+    course: 'Humanities',
+    description:
+      'In this course, students engage with literature, history, and critical thinking through personalized, adaptive coursework at {company}.',
+    nodeTitles: {
+      principles: 'Why the Humanities Matter',
+      terminology: 'Key Terms in Reading and History',
+      styles: 'Reading Closely',
+      communication: 'Building an Argument',
+      'practice-quiz': 'Practice: Analyze a Passage',
+      'feedback-sim': 'Seminar Discussion Sim',
+      expectations: 'Writing with Clarity and Voice',
+      milestone: 'Checkpoint: Critical Reader',
+      'customer-king': 'Ideas in Their Context',
+      'customer-sim': 'Peer Feedback Sim',
+      'case-study': 'Case Study: Reading Between the Lines',
+      'final-assessment': 'Verify: Humanities',
+    },
+    questions: [
+      {
+        q: 'Close reading means…',
+        skillTag: 'fundamentals',
+        options: [
+          { label: 'Paying careful attention to the details of a text', correct: true },
+          { label: 'Reading as fast as possible' },
+          { label: 'Skimming only for the summary' },
+        ],
+      },
+      {
+        q: 'A strong interpretation of a text is one that…',
+        skillTag: 'leadership',
+        options: [
+          { label: 'Is supported by evidence from the text itself', correct: true },
+          { label: 'Simply sounds impressive' },
+          { label: 'Ignores what the text actually says' },
+        ],
+      },
+      {
+        q: 'A clear written argument begins with…',
+        skillTag: 'communication',
+        options: [
+          { label: 'A clear thesis the rest of the essay supports', correct: true },
+          { label: 'As many quotes as possible' },
+          { label: 'A summary of everything you read' },
+        ],
+      },
+    ],
+  },
+
+  'he-leadership': {
+    group: 'Career Readiness',
+    course: 'Leadership & Soft Skills',
+    description:
+      'In this course, students build the communication, collaboration, and leadership skills that employers and graduate programs value, adaptive to each learner at {company}.',
+    nodeTitles: {
+      principles: 'What Employers Actually Value',
+      terminology: 'The Language of the Workplace',
+      styles: 'Working on a Team',
+      communication: 'Communicating with Impact',
+      'practice-quiz': 'Practice: Real Workplace Moments',
+      'feedback-sim': 'Interview Practice Sim',
+      expectations: 'Managing Time and Priorities',
+      milestone: 'Checkpoint: Ready for the Workplace',
+      'customer-king': 'Leading and Influencing Others',
+      'customer-sim': 'Difficult Conversation Sim',
+      'case-study': 'Case Study: From Classroom to Career',
+      'final-assessment': 'Verify: Leadership and Soft Skills',
+    },
+    questions: [
+      {
+        q: 'Employers say the most valuable graduate skills are…',
+        skillTag: 'fundamentals',
+        options: [
+          { label: 'Communication, teamwork, and problem solving', correct: true },
+          { label: 'Memorizing facts' },
+          { label: 'Working alone at all times' },
+        ],
+      },
+      {
+        q: 'A teammate is not carrying their share of a group project. A mature response is…',
+        skillTag: 'leadership',
+        options: [
+          { label: 'Talk with them directly and honestly', correct: true },
+          { label: 'Complain to everyone else' },
+          { label: 'Do all the work silently' },
+        ],
+      },
+      {
+        q: 'The most effective communicators…',
+        skillTag: 'communication',
+        options: [
+          { label: 'Listen as much as they speak', correct: true },
+          { label: 'Talk the most in every room' },
+          { label: 'Avoid asking questions' },
+        ],
+      },
+    ],
+  },
 }
 
 function engineContentFor(trainingId: string | null): TrainingContent {
-  return TRAINING_CONTENT[engineFor(trainingId ?? '')] ?? TRAINING_CONTENT.leadership
+  const id = trainingId ?? ''
+  // Prefer content authored for the exact topic; fall back to its engine.
+  return TRAINING_CONTENT[id] ?? TRAINING_CONTENT[engineFor(id)] ?? TRAINING_CONTENT.leadership
 }
 
 /** Turn "Clinical_onboarding-manual v2.pdf" into "Clinical Onboarding Manual V2". */
