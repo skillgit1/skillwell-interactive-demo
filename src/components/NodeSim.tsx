@@ -43,7 +43,7 @@ export function NodeSim({
         {/* Placeholder background — replaced by the avatar image when present */}
         <span className="absolute inset-0 bg-gradient-to-br from-[#eef2f6] to-[#dfe6ee]" />
         <img
-          src="/sim-thumbnail.jpg"
+          src={`${import.meta.env.BASE_URL}sim-thumbnail.jpg`}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           onError={(e) => {

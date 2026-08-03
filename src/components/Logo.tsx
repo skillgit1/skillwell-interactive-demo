@@ -6,7 +6,7 @@
 export function Logo({ className }: { className?: string }) {
   return (
     <img
-      src="/skillwell-logo-horizontal.svg"
+      src={`${import.meta.env.BASE_URL}skillwell-logo-horizontal.svg`}
       alt="Skillwell"
       className={`h-5 w-auto ${className ?? ''}`}
     />
