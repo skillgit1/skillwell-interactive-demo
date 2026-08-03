@@ -68,12 +68,12 @@ export function KnowledgeCheck({
             ? 'You knew all of it.'
             : n > 0
               ? `You already know ${n} of ${questions.length} skills.`
-              : "Great — now we know where to start."}
+              : "Great. Now we know where to start."}
         </h3>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
           {n > 0
-            ? `Skillwell verified ${n} ${n === 1 ? 'skill' : 'skills'} and is adapting your path — you'll skip what you've already mastered.`
-            : 'Skillwell kept your full path so you can build these skills from the ground up — and it keeps adapting as you learn.'}
+            ? `Skillwell verified ${n} ${n === 1 ? 'skill' : 'skills'} and is adapting your path, so you'll skip what you've already mastered.`
+            : 'Skillwell kept your full path so you can build these skills from the ground up, and it keeps adapting as you learn.'}
         </p>
         <button
           type="button"

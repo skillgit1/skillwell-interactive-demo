@@ -18,7 +18,7 @@ export interface SimContent {
   embedUrl: string | null
 }
 
-// The live "try a simulation" experience — a multi-industry example sim.
+// The live "try a simulation" experience, a multi-industry example sim.
 // V1 uses this single URL for every sim node; swap per-scenario links later.
 export const DEFAULT_SIM_EMBED: string | null = 'https://marketplace.skillsims.com/etu/runSimulation.jsf'
 
@@ -27,7 +27,7 @@ export const DEFAULT_SIM_EMBED: string | null = 'https://marketplace.skillsims.c
 // browsers refuse to send in a cross-origin frame (renders blank). So V1
 // launches it in a new tab. When the product team provides an embeddable /
 // guest-accessible URL (or embed code), set this to true and it renders
-// in the popup like every other node — no other change needed.
+// in the popup like every other node, with no other change needed.
 export const SIM_EMBEDDABLE = false
 
 type SimMap = Record<string, Omit<SimContent, 'embedUrl'>>
@@ -36,7 +36,7 @@ const SIMS: Record<string, SimMap> = {
   leadership: {
     'feedback-sim': {
       intro:
-        'Step into a coaching conversation with a virtual team member. What you say shapes how the conversation unfolds — and how they respond.',
+        'Step into a coaching conversation with a virtual team member. What you say shapes how the conversation unfolds, and how they respond.',
       objectives: [
         'Deliver specific, behavior-based feedback',
         'Keep the conversation constructive under pressure',
@@ -107,11 +107,11 @@ const SIMS: Record<string, SimMap> = {
   },
 }
 
-// Generic "example simulation" — shown for the showcase sim node and any
+// Generic "example simulation", shown for the showcase sim node and any
 // sim without a specific scenario. Deliberately multi-industry for V1.
 const EXAMPLE_SIM = {
   intro:
-    'With Skillwell Simulate, you build immersive, realistic practice simulations in a few clicks with AI — and learners experience them right inside the course. Below is a complete example simulation (a generic one, for this preview). Click to open it.',
+    'With Skillwell Simulate, you build immersive, realistic practice simulations in a few clicks with AI, and learners experience them right inside the course. Below is a complete example simulation (a generic one, for this preview). Click to open it.',
   objectives: [
     'Experience an immersive, branching simulation first-hand',
     'See how your choices change the outcome',

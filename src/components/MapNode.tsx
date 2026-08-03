@@ -75,7 +75,7 @@ export function MapNode({
         transform: 'translate(-50%, -50%)',
       }}
       className="group absolute focus:outline-none"
-      aria-label={`${node.title} — ${node.state}`}
+      aria-label={`${node.title}, ${node.state}`}
     >
       <NodeCircle state={node.state} active={active} />
 

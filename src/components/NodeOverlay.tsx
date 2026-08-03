@@ -141,7 +141,7 @@ export function NodeOverlay({
                 ) : node.type === 'check' ? (
                   <div className="grid place-items-center rounded-xl bg-node-complete/10 py-12 text-center">
                     <p className="text-sm font-semibold text-node-complete">
-                      Knowledge check complete — your path has been adapted.
+                      Knowledge check complete. Your path has been adapted.
                     </p>
                   </div>
                 ) : node.type === 'sim' ? (

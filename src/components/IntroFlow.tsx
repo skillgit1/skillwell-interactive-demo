@@ -131,7 +131,7 @@ export function IntroFlow({
               learner skills data behind it.
             </p>
             <p className="mt-2 text-sm font-medium text-ink">
-              No account needed — just an open preview.
+              No account needed, just an open preview.
             </p>
             <button
               type="button"
@@ -187,8 +187,8 @@ export function IntroFlow({
             }
             subcopy={
               industry === 'highered'
-                ? 'Common courses institutions run on Skillwell — pick one to preview.'
-                : 'If you can teach it, Skillwell can build and adapt it — these are just a few favorites.'
+                ? 'Common courses institutions run on Skillwell. Pick one to preview.'
+                : 'If you can teach it, Skillwell can build and adapt it. These are just a few favorites.'
             }
             options={trainingsFor(industry).map((t) => ({ id: t.id, label: t.label }))}
             onPick={(id) => {
@@ -210,14 +210,14 @@ export function IntroFlow({
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
             <p className="text-xs font-bold uppercase tracking-widest text-primary">
-              Optional — but this is the magic
+              Optional, but this is the magic
             </p>
             <h2 className="mt-3 font-display text-xl font-bold tracking-tight text-ink">
               Have existing training content?
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-ink-soft">
               Drop in a training manual, a syllabus, or any course document.
-              Skillwell automatically populates your learning map in a few clicks —
+              Skillwell automatically populates your learning map in a few clicks,
               using our skills taxonomy and AI-powered skills development system.
             </p>
 
@@ -254,7 +254,7 @@ export function IntroFlow({
                 Drop your document here or click to browse
               </span>
               <span className="text-xs text-ink-muted">
-                Training manual · syllabus · course doc — stays in your browser, never uploaded
+                Training manual · syllabus · course doc, and it stays in your browser, never uploaded
               </span>
             </button>
 
@@ -263,7 +263,7 @@ export function IntroFlow({
               onClick={finishWithoutFile}
               className="mt-4 text-xs font-medium text-ink-muted transition-colors hover:text-ink"
             >
-              No file handy — build me a sample course
+              No file handy? Build me a sample course
             </button>
           </motion.div>
         )}
@@ -356,7 +356,7 @@ export function IntroFlow({
                   Building your learning map…
                 </h2>
                 <p className="mt-2 text-sm text-ink-soft">
-                  In the real product, your team builds these in minutes — this one's on us.
+                  In the real product, your team builds these in minutes. This one's on us.
                 </p>
               </>
             )}
@@ -430,7 +430,7 @@ function QuestionCard({
         onClick={onSkip}
         className="mt-4 text-xs font-medium text-ink-muted transition-colors hover:text-ink"
       >
-        Skip — just show me the map
+        Skip and just show me the map
       </button>
     </motion.div>
   )
@@ -459,7 +459,7 @@ function IndustryCard({
         What industry are you in?
       </h2>
       <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-        Skillwell powers learning in every industry — pick yours and we'll build the demo around it.
+        Skillwell powers learning in every industry. Pick yours and we'll build the demo around it.
       </p>
 
       <div className="mt-5 grid grid-cols-2 gap-2.5">
@@ -506,7 +506,7 @@ function IndustryCard({
         onClick={onSkip}
         className="mt-4 text-xs font-medium text-ink-muted transition-colors hover:text-ink"
       >
-        Skip — just show me the map
+        Skip and just show me the map
       </button>
     </motion.div>
   )

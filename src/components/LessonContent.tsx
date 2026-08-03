@@ -268,7 +268,7 @@ function QuizView({
             correct ? 'bg-node-complete/10 text-node-complete' : 'bg-warning-soft text-warning'
           }`}
         >
-          {correct ? 'Correct — nicely done.' : 'Not quite — the right answer is highlighted above.'}
+          {correct ? 'Correct. Nicely done.' : 'Not quite. The right answer is highlighted above.'}
         </div>
       )}
     </div>

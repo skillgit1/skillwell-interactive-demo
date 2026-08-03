@@ -249,7 +249,7 @@ export default function App() {
                   {answers?.fileName ? (
                     <>
                       <p className="text-sm font-semibold">
-                        Built from your document — automatically.
+                        Built from your document, automatically.
                       </p>
                       <p className="mt-1 text-xs leading-relaxed text-white/85">
                         Skillwell read “{answers.fileName}”, matched{' '}
@@ -262,7 +262,7 @@ export default function App() {
                   ) : (
                     <>
                       <p className="text-sm font-semibold">
-                        Built for {industryLabel} · {trainingLabel} — in seconds.
+                        Built for {industryLabel} · {trainingLabel}, in seconds.
                       </p>
                       <p className="mt-1 text-xs leading-relaxed text-white/85">
                         Skillwell builds any type of training, for any industry. Now see
@@ -276,12 +276,12 @@ export default function App() {
               {banner === 'adapted' && (
                 <BannerCard key="adapted" onDismiss={() => setBanner(null)} cta="Keep exploring">
                   <p className="text-sm font-semibold">
-                    Your path just adapted — this is Skillwell working.
+                    Your path just adapted. This is Skillwell working.
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-white/85">
                     {verifiedCount > 0
-                      ? `You tested out of ${verifiedCount} ${verifiedCount === 1 ? 'activity' : 'activities'} (~${formatSaved(saved)} of seat time). Teal nodes are verified skills — and this keeps happening as real learners progress.`
-                      : 'Your full path is ready — Skillwell will keep adapting it as you demonstrate skills along the way.'}
+                      ? `You tested out of ${verifiedCount} ${verifiedCount === 1 ? 'activity' : 'activities'} (~${formatSaved(saved)} of seat time). Teal nodes are verified skills, and this keeps happening as real learners progress.`
+                      : 'Your full path is ready, and Skillwell will keep adapting it as you demonstrate skills along the way.'}
                   </p>
                 </BannerCard>
               )}
@@ -360,7 +360,7 @@ function ConversionModal({
           </svg>
         </div>
         <h2 className="mt-4 font-display text-2xl font-bold tracking-tight text-ink">
-          You've seen the learner experience — and the data behind it
+          You've seen the learner experience, and the data behind it
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
           A knowledge check, an immersive simulation, an adaptive lesson, and the

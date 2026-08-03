@@ -6,7 +6,7 @@ import type { MapContent } from './types'
  * The intro's two taps (industry + training type) exist to prove breadth:
  * Skillwell works in ANY industry and can build ANY type of training.
  * They retitle the course, scenario, and node labels so the map feels
- * built for the visitor. Content-only — the graph structure stays
+ * built for the visitor. Content only, since the graph structure stays
  * identical, which keeps this maintainable.
  *
  * The knowledge check ("Determine Knowledge" node) is the learner-side
@@ -17,7 +17,7 @@ import type { MapContent } from './types'
 export interface IntroAnswers {
   industry: string
   training: string
-  /** Name of an uploaded training document (client-side only — the file
+  /** Name of an uploaded training document (client-side only, since the file
    *  itself never leaves the browser; we use the name to theme the map). */
   fileName?: string | null
 }
@@ -33,7 +33,7 @@ export interface Industry {
   id: string
   label: string
   company: string
-  /** Higher Ed is a distinct buyer — rendered apart from the corporate grid. */
+  /** Higher Ed is a distinct buyer, rendered apart from the corporate grid. */
   higherEd?: boolean
 }
 
@@ -46,7 +46,7 @@ export const INDUSTRIES: Industry[] = [
   { id: 'other', label: 'Other', company: 'Atlas Industries' },
 ]
 
-/** Rendered separately with an "Academic" badge — not a normal industry tile. */
+/** Rendered separately with an "Academic" badge, not a normal industry tile. */
 export const HIGHER_ED_INDUSTRY: Industry = {
   id: 'highered',
   label: 'Higher Education',
@@ -86,7 +86,7 @@ export const CORPORATE_TRAININGS: TrainingOption[] = [
   },
 ]
 
-/** Shown only when the visitor picks Higher Education — academic categories. */
+/** Shown only when the visitor picks Higher Education (academic categories). */
 export const HIGHER_ED_TRAININGS: TrainingOption[] = [
   {
     id: 'he-mandatory',
@@ -95,7 +95,7 @@ export const HIGHER_ED_TRAININGS: TrainingOption[] = [
     group: 'Compliance',
     course: 'Mandatory Training',
     description:
-      "In this path, students and staff complete {company}'s required training — Title IX, harassment prevention, and campus safety — in one adaptive experience.",
+      "In this path, students and staff complete the required training at {company}, including Title IX, harassment prevention, and campus safety, in one adaptive experience.",
   },
   {
     id: 'he-stem',
@@ -131,7 +131,7 @@ export const HIGHER_ED_TRAININGS: TrainingOption[] = [
     group: 'Career Readiness',
     course: 'Leadership & Soft Skills',
     description:
-      "In this course, students build the communication, collaboration, and leadership skills that employers and graduate programs value — adaptive to each learner at {company}.",
+      "In this course, students build the communication, collaboration, and leadership skills that employers and graduate programs value, adaptive to each learner at {company}.",
   },
 ]
 
@@ -169,7 +169,7 @@ const TRAINING_CONTENT: Record<string, TrainingContent> = {
     group: 'Onboarding',
     course: 'New Hire Onboarding',
     description:
-      "In this course, you'll ramp into your new role — the systems, the culture, and the conversations that matter in your first 30 days at {company}.",
+      "In this course, you'll ramp into your new role, learning the systems, the culture, and the conversations that matter in your first 30 days at {company}.",
     nodeTitles: {
       principles: 'Your First 30 Days',
       terminology: "Who's Who & Key Terms",
@@ -218,7 +218,7 @@ const TRAINING_CONTENT: Record<string, TrainingContent> = {
     group: 'Compliance & Risk',
     course: 'Compliance Essentials',
     description:
-      "In this course, you'll build the judgment to spot, handle, and report risk with confidence — grounded in real scenarios from {company}.",
+      "In this course, you'll build the judgment to spot, handle, and report risk with confidence, grounded in real scenarios from {company}.",
     nodeTitles: {
       principles: 'Why Compliance Matters',
       terminology: 'Key Terms & Definitions',
@@ -248,7 +248,7 @@ const TRAINING_CONTENT: Record<string, TrainingContent> = {
         skillTag: 'leadership',
         options: [
           { label: 'Report it through the proper channel', correct: true },
-          { label: 'Ignore it — not your problem' },
+          { label: 'Ignore it, since it is not your problem' },
           { label: 'Confront them publicly' },
         ],
       },
@@ -256,7 +256,7 @@ const TRAINING_CONTENT: Record<string, TrainingContent> = {
         q: "You're unsure whether something needs to be reported. Best move?",
         skillTag: 'communication',
         options: [
-          { label: 'Ask — report when in doubt', correct: true },
+          { label: 'Ask, and report when in doubt', correct: true },
           { label: 'Assume someone else will' },
           { label: 'Wait for proof first' },
         ],
@@ -267,7 +267,7 @@ const TRAINING_CONTENT: Record<string, TrainingContent> = {
     group: 'Basics of Management',
     course: 'Introduction to Management',
     description:
-      "In this course, you'll explore the fundamentals of management at {company}. An important element of the management task is leading people — setting expectations, coaching, and putting the customer at the center of every decision.",
+      "In this course, you'll explore the fundamentals of management at {company}. An important part of the management task is leading people, which means setting expectations, coaching, and putting the customer at the center of every decision.",
     nodeTitles: {
       principles: 'Principles of Management',
       terminology: "The Manager's Vocabulary",
@@ -316,7 +316,7 @@ const TRAINING_CONTENT: Record<string, TrainingContent> = {
     group: 'Sales & Service',
     course: 'Sales & Service Excellence',
     description:
-      "In this course, you'll sharpen the skills that win and keep customers at {company} — discovery, objection handling, and closing with confidence.",
+      "In this course, you'll sharpen the skills that win and keep customers at {company}: discovery, objection handling, and closing with confidence.",
     nodeTitles: {
       principles: 'Knowing Your Customer',
       terminology: 'Your Product, Cold',
@@ -688,7 +688,7 @@ export function uniqueSkillCount(content: MapContent): number {
   return tags.size
 }
 
-/** Apply intro answers to the base map content. Pure — returns a new object. */
+/** Apply intro answers to the base map content. Pure, returns a new object. */
 export function personalize(base: MapContent, answers: IntroAnswers | null): MapContent {
   if (!answers) return base
   const industry = findIndustry(answers.industry) ?? INDUSTRIES[INDUSTRIES.length - 1]
@@ -701,7 +701,7 @@ export function personalize(base: MapContent, answers: IntroAnswers | null): Map
 
   const course = answers.fileName ? cleanFileName(answers.fileName) : baseCourse
   const description = answers.fileName
-    ? `Generated automatically from “${answers.fileName}” — Skillwell extracted the skills inside and mapped them to an adaptive path for ${industry.company} using its skills taxonomy.`
+    ? `Generated automatically from “${answers.fileName}”. Skillwell extracted the skills inside and mapped them to an adaptive path for ${industry.company} using its skills taxonomy.`
     : baseDesc.replace(/\{company\}/g, industry.company)
 
   return {
@@ -714,7 +714,7 @@ export function personalize(base: MapContent, answers: IntroAnswers | null): Map
     },
     nodes: base.nodes.map((n) => ({
       ...n,
-      // Sim nodes stay generic — the example sim is not topic-specific, so we
+      // Sim nodes stay generic, since the example sim is not topic-specific, so we
       // never relabel them with the course topic. Content nodes get retitled.
       title: n.type === 'sim' ? n.title : engine.nodeTitles[n.id] ?? n.title,
     })),

@@ -178,7 +178,7 @@ export function AutoInsightsReport({
               Admin view
             </span>
             <span className="text-sm font-medium text-white/90">
-              Auto-Insights — what your L&amp;D team sees, <span className="font-bold">not the learner</span>
+              Auto-Insights: what your L&amp;D team sees, <span className="font-bold">not the learner</span>
             </span>
           </div>
           <button
@@ -208,12 +208,12 @@ export function AutoInsightsReport({
             </div>
             <div className="hidden text-right text-xs text-ink-muted sm:block">
               <p>Report generated: Jun 1, 2026</p>
-              <p>Data included: Jan 31, 2026 – May 31, 2026</p>
+              <p>Data included: Jan 31, 2026 to May 31, 2026</p>
             </div>
           </div>
 
           <Note>
-            This is the <span className="font-bold">course-creator's dashboard</span> — a live view of
+            This is the <span className="font-bold">course-creator's dashboard</span>, a live view of
             how a whole cohort is performing. Skillwell generates it automatically from every learner's
             simulation attempts.
           </Note>
@@ -221,7 +221,7 @@ export function AutoInsightsReport({
           {/* Learner Engagement */}
           <Section
             title="Learner Engagement"
-            desc="Unique learners who have engaged with the simulation — how many started, completed an attempt, and retried."
+            desc="Unique learners who have engaged with the simulation: how many started, completed an attempt, and retried."
           >
             <div className="grid gap-8 sm:grid-cols-2">
               <div className="flex items-center gap-6">
@@ -270,13 +270,13 @@ export function AutoInsightsReport({
             />
             <Note>
               Engagement spikes at rollout, then tails off. Admins spot the drop-off and re-engage
-              learners — <span className="font-bold">before</span> a program quietly stalls.
+              learners, <span className="font-bold">before</span> a program quietly stalls.
             </Note>
           </Section>
 
           {/* Skills Performance: First attempts */}
           <Section
-            title="Skills Performance — First Attempts"
+            title="Skills Performance: First Attempts"
             desc="Average skill scores across all learners' first completed attempt. This is the difference between 'they finished the course' and 'they can actually do it.'"
           >
             <div className="space-y-3">
@@ -296,7 +296,7 @@ export function AutoInsightsReport({
               ))}
             </div>
             <Note>
-              This is what makes Skillwell different — we measure <span className="font-bold">demonstrated
+              This is what makes Skillwell different. We measure <span className="font-bold">demonstrated
               skill</span>, not seat time. A creator sees exactly which skills a cohort has mastered and
               where to intervene.
             </Note>
@@ -304,7 +304,7 @@ export function AutoInsightsReport({
 
           {/* Skills Performance: Score improvements */}
           <Section
-            title="Skills Performance — Score Improvements"
+            title="Skills Performance: Score Improvements"
             desc="For learners who retried: average skill scores on the first attempt vs. the last, and the improvement between them."
           >
             <div className="mb-3 flex items-center gap-4 text-xs font-medium text-ink-soft">
@@ -341,7 +341,7 @@ export function AutoInsightsReport({
             </div>
             <Note>
               Retakes prove <span className="font-bold">growth</span>. Skillwell captures the before/after
-              on every skill — the clearest way to show ROI on a training program.
+              on every skill, the clearest way to show ROI on a training program.
             </Note>
           </Section>
 

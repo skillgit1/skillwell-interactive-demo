@@ -92,7 +92,7 @@ export function moderateUpload(file: File): ModerationResult {
       ok: false,
       category: 'malware',
       message:
-        "That file type can't be processed here. Upload a document (PDF, Word, PowerPoint, or text) — or skip and explore an example learning map.",
+        "That file type can't be processed here. Upload a document (PDF, Word, PowerPoint, or text), or skip and explore an example learning map.",
     }
   }
 
