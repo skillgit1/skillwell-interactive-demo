@@ -110,14 +110,14 @@ function VBars({
 
 function Note({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-5 flex gap-3 rounded-xl border border-oasis/30 bg-oasis/5 p-4">
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-oasis/15 text-oasis">
+    <div className="my-5 flex gap-3 rounded-xl border border-l-4 border-warning/40 border-l-warning bg-warning-soft p-4">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-warning/20 text-warning">
         <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 18h6m-5 3h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 3Z" />
         </svg>
       </span>
       <div>
-        <p className="text-xs font-bold uppercase tracking-wide text-oasis">Why this matters</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-warning">Why this matters</p>
         <p className="mt-0.5 text-sm leading-relaxed text-ink">{children}</p>
       </div>
     </div>
@@ -265,7 +265,7 @@ export function AutoInsightsReport({
             desc="Unique learners who complete an attempt, by month of completion."
           >
             <VBars
-              data={OVER_TIME.map((d) => ({ label: `${d.month} '24`, value: d.learners }))}
+              data={OVER_TIME.map((d) => ({ label: d.month, value: d.learners }))}
               color={BLUE}
             />
             <Note>

@@ -219,6 +219,15 @@ export default function App() {
               <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-ink-soft">
                 {scenario.description}
               </p>
+              {answers?.fileName && (
+                <span className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+                  <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                    <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" />
+                  </svg>
+                  Built from your upload: {answers.fileName}
+                </span>
+              )}
             </div>
           </div>
 
@@ -360,19 +369,20 @@ function ConversionModal({
           </svg>
         </div>
         <h2 className="mt-4 font-display text-2xl font-bold tracking-tight text-ink">
-          You've seen the learner experience, and the data behind it
+          You've seen a glimpse. The best part is on the call.
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          A knowledge check, an immersive simulation, an adaptive lesson, and the
-          auto-insights your L&amp;D team gets. This preview is a small slice of what your
-          team can build. See the full platform with a quick call.
+          This is our simplest, self-guided build. On a quick call we can show you
+          simulations built for your team, how a learner's path adapts to them in real
+          time, and the designers who build it all with you. That is the part a preview
+          cannot capture.
         </p>
         <button
           type="button"
           onClick={onBook}
           className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-btn bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
         >
-          Book a call with our team
+          Book a call to see the full platform
           <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M7 17L17 7M17 7H8M17 7v9" />
           </svg>

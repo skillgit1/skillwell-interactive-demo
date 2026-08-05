@@ -64,10 +64,14 @@ export function LearningMap({
       for (const targetId of n.edges) {
         const target = byId[targetId]
         if (!target) continue
+        // An edge reads as "traveled" (strong) only when its SOURCE node is
+        // done — completed or tested out. Future or not-yet-started paths stay
+        // faded, so an arrow never highlights out of a node you haven't finished.
+        const traveled = n.state === 'completed' || n.state === 'verified'
         list.push({
           id: `${n.id}->${targetId}`,
           ...straightEdge(n, target),
-          faded: target.state === 'locked',
+          faded: !traveled,
         })
       }
     }
