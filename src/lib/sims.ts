@@ -20,7 +20,13 @@ export interface SimContent {
 
 // The live "try a simulation" experience, a multi-industry example sim.
 // V1 uses this single URL for every sim node; swap per-scenario links later.
-export const DEFAULT_SIM_EMBED: string | null = 'https://marketplace.skillsims.com/etu/runSimulation.jsf'
+//
+// This is the shareable DISTRIBUTION link (dlink). It carries its own access
+// token, so a logged-out visitor can open it without an account: it bootstraps
+// a guest session and redirects to sim.jsf. The bare sim.jsf / runSimulation.jsf
+// URLs require an existing SSO session and would lock a demo visitor out.
+export const DEFAULT_SIM_EMBED: string | null =
+  'https://marketplace.skillsims.com/etu/dlink.jsf?linkid=808148d7-dd49-48cb-a965-6862dcac1677&submissionGuid=e5a5b61d-121b-4f79-8013-4e99355430da'
 
 // Can the sim URL be shown INSIDE an iframe? The current marketplace URL
 // CANNOT: it redirects to a logon page and relies on session cookies that
