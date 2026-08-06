@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import type { MapNode } from '../lib/types'
 import type { CheckQuestion } from '../lib/personalize'
 import { track } from '../lib/track'
-import { getLesson } from '../lib/lessons'
+import { getLesson, type NodeLesson } from '../lib/lessons'
 import { Icon } from './Icon'
 import { KnowledgeCheck } from './KnowledgeCheck'
 import { LessonContent } from './LessonContent'
@@ -31,6 +31,7 @@ export function NodeOverlay({
   onNodeDone,
   training,
   company,
+  knownTags,
 }: {
   node: MapNode | null
   onClose: () => void
@@ -44,6 +45,9 @@ export function NodeOverlay({
   training: string
   /** Personalized company name for {company} interpolation. */
   company: string
+  /** Skills answered correctly in the check — their lesson quiz is skipped so a
+   *  correctly-answered question never repeats inside a lesson. */
+  knownTags: string[]
 }) {
   const openedAt = useRef<number>(0)
   // On touch devices a tap fires a synthesized "ghost" click ~300ms later at the
@@ -132,7 +136,11 @@ export function NodeOverlay({
             {node.type === 'content' ? (
               // full-bleed: LessonContent owns its own rail, scroll, and footer
               <LessonContent
-                lesson={getLesson(training, node.id, company, node.title)}
+                lesson={applyKnown(
+                  getLesson(training, node.id, company, node.title),
+                  node.skillTags,
+                  knownTags,
+                )}
                 onNext={() => {
                   onNodeDone(node.id)
                   close()
@@ -191,4 +199,10 @@ export function NodeOverlay({
       )}
     </AnimatePresence>
   )
+}
+
+/** Drop a lesson's embedded quiz when the learner already answered this skill's
+ *  question correctly in the Determine Knowledge check, so no question repeats. */
+function applyKnown(lesson: NodeLesson, skillTags: string[], knownTags: string[]): NodeLesson {
+  return skillTags.some((t) => knownTags.includes(t)) ? { ...lesson, quiz: undefined } : lesson
 }

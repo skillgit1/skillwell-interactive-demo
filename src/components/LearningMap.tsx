@@ -34,6 +34,7 @@ export function LearningMap({
   openableIds,
   onNodeDone,
   showPopover = true,
+  knownTags = [],
 }: {
   content: MapContent
   questions: CheckQuestion[]
@@ -46,6 +47,8 @@ export function LearningMap({
   onNodeDone: (nodeId: string) => void
   /** Gate the "suggested next step" popover until the map context is read. */
   showPopover?: boolean
+  /** Skill tags already answered correctly in the knowledge check. */
+  knownTags?: string[]
 }) {
   const { nodes } = content
   const byId = useMemo(() => Object.fromEntries(nodes.map((n) => [n.id, n])), [nodes])
@@ -192,6 +195,7 @@ export function LearningMap({
         onNodeDone={onNodeDone}
         training={training}
         company={content.scenario.company}
+        knownTags={knownTags}
       />
     </div>
   )

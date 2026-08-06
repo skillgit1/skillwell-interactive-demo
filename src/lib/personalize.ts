@@ -681,6 +681,37 @@ export function cleanFileName(name: string): string {
   return titled.length > 48 ? titled.slice(0, 48).trimEnd() + '…' : titled
 }
 
+/** Strip document-type words to get the subject, e.g. "Math 101 Syllabus" ->
+ *  "Math 101", "Clinical Onboarding Manual" -> "Clinical Onboarding". */
+export function subjectFromFile(name: string): string {
+  const cleaned = cleanFileName(name).replace(/…$/, '').trim()
+  const stripped = cleaned
+    .replace(
+      /\b(syllabus|manual|guide|handbook|overview|document|doc|deck|slides?|notes|outline|curriculum|course|training|program|module|materials?|final|draft|copy of|version|v\d+)\b/gi,
+      '',
+    )
+    .replace(/\s+/g, ' ')
+    .trim()
+  return stripped.length >= 2 ? stripped : cleaned
+}
+
+/** When a document is uploaded we cannot read it server-side (it never leaves
+ *  the browser), so the map is themed around the document's subject. Used ONLY
+ *  on the upload path; the standard topic keeps its authored node titles. */
+function uploadNodeTitles(subject: string): Record<string, string> {
+  return {
+    terminology: `${subject}: Key Terms`,
+    styles: `${subject}: Core Concepts`,
+    communication: `${subject} in Practice`,
+    'practice-quiz': `${subject}: Practice Set`,
+    expectations: `${subject}: What to Master`,
+    milestone: `Checkpoint: ${subject}`,
+    'customer-king': `Applying ${subject}`,
+    'case-study': `Case Study: ${subject}`,
+    'final-assessment': `Verify: ${subject}`,
+  }
+}
+
 /** Unique skills across the map (what "the taxonomy mapped"), excluding baseline. */
 export function uniqueSkillCount(content: MapContent): number {
   const tags = new Set<string>()
@@ -704,6 +735,12 @@ export function personalize(base: MapContent, answers: IntroAnswers | null): Map
     ? `Generated automatically from “${answers.fileName}”. Skillwell extracted the skills inside and mapped them to an adaptive path for ${industry.company} using its skills taxonomy.`
     : baseDesc.replace(/\{company\}/g, industry.company)
 
+  // Uploading a document re-themes the whole map around its subject; otherwise
+  // the chosen topic keeps its authored node titles.
+  const nodeTitles = answers.fileName
+    ? uploadNodeTitles(subjectFromFile(answers.fileName))
+    : engine.nodeTitles
+
   return {
     scenario: {
       ...base.scenario,
@@ -716,7 +753,7 @@ export function personalize(base: MapContent, answers: IntroAnswers | null): Map
       ...n,
       // Sim nodes stay generic, since the example sim is not topic-specific, so we
       // never relabel them with the course topic. Content nodes get retitled.
-      title: n.type === 'sim' ? n.title : engine.nodeTitles[n.id] ?? n.title,
+      title: n.type === 'sim' ? n.title : nodeTitles[n.id] ?? n.title,
     })),
   }
 }

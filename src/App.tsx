@@ -52,6 +52,9 @@ export default function App() {
   /** The "suggested next step" popover waits until the visitor has had a moment
    *  to read the map + the build banner, so it never covers that context. */
   const [popoverReady, setPopoverReady] = useState(false)
+  /** Skill tags answered correctly in the knowledge check. A lesson's embedded
+   *  quiz is skipped for these, so a correctly-answered question never repeats. */
+  const [knownTags, setKnownTags] = useState<string[]>([])
 
   useEffect(() => {
     // If this browser consented on a prior visit, re-arm tracking before the
@@ -87,6 +90,7 @@ export default function App() {
       /* ignore */
     }
     setOverrides(null)
+    setKnownTags([])
     setShowcaseStep(0)
     setPostPreview(null)
     setIntro({ phase: 'active' })
@@ -112,6 +116,7 @@ export default function App() {
         if (node?.skillTags.some((t) => verifiedTags.includes(t))) next[id] = 'verified'
       }
       setOverrides(next)
+      setKnownTags(verifiedTags)
       handleNodeDone('knowledge-check')
     },
     [handleNodeDone],
@@ -262,6 +267,7 @@ export default function App() {
               openableIds={openableIds}
               onNodeDone={handleNodeDone}
               showPopover={popoverReady}
+              knownTags={knownTags}
             />
           </section>
         </main>
