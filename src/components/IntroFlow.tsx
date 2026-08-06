@@ -116,29 +116,43 @@ export function IntroFlow({
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
-            <p className="text-xs font-bold uppercase tracking-widest text-primary">
-              Skillwell Preview Demo Experience
-            </p>
-            <h2 className="mt-3 font-display text-2xl font-bold tracking-tight text-ink">
-              Any industry. Any training. Adapted to every learner.
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary-soft px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
+              <span className="size-1.5 rounded-full bg-oasis" />
+              Skillwell Preview Demo
+            </span>
+            <h2 className="mt-4 font-display text-2xl font-bold tracking-tight text-ink">
+              Your industry. Your training. Adapted to your learners.
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-              In under 5 minutes, you'll see how Skillwell creates unique training
-              content, a live learning map, realistic simulations, and tracks the
-              learner skills data behind it.
+            <p className="mt-3 text-sm font-medium text-ink-soft">
+              See it built for you in under 5 minutes.
             </p>
-            <p className="mt-2 text-sm font-medium text-ink">
-              No account needed, just an open preview.
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {['Custom content', 'Live learning map', 'Realistic simulations', 'Skills data'].map(
+                (chip) => (
+                  <span
+                    key={chip}
+                    className="rounded-full border border-line bg-sunken/60 px-3 py-1 text-xs font-medium text-ink-soft"
+                  >
+                    {chip}
+                  </span>
+                ),
+              )}
+            </div>
+            <p className="mt-5 flex items-center justify-center gap-1.5 text-xs font-semibold text-ink">
+              <svg viewBox="0 0 24 24" className="size-4 text-oasis" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              No Account or Card Needed
             </p>
             <button
               type="button"
               onClick={() => {
-                // Starting the demo is the consent action — see the fine print below.
+                // Starting the demo is the consent action (see the fine-print bar).
                 grantConsent()
                 track('intro_started', {})
                 setStep('industry')
               }}
-              className="mt-6 w-full rounded-btn bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+              className="mt-5 w-full rounded-btn bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
             >
               Personalize my demo
             </button>
@@ -149,13 +163,6 @@ export function IntroFlow({
             >
               Skip to the example demo
             </button>
-
-            {/* Consent as fine print — continuing (either button) is acceptance. */}
-            <p className="mx-auto mt-5 max-w-sm border-t border-line pt-3 text-[11px] leading-relaxed text-ink-muted">
-              By continuing, you agree to our use of cookies and session analytics
-              to understand how this preview is used and make it better. No personal
-              account is created.
-            </p>
           </motion.div>
         )}
 
@@ -392,7 +399,7 @@ export function IntroFlow({
 
       {/* progress dots */}
       {step !== 'building' && (
-        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-1.5">
+        <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 gap-1.5">
           {STEPS.map((s, i) => (
             <span
               key={s}
@@ -403,6 +410,33 @@ export function IntroFlow({
           ))}
         </div>
       )}
+
+      {/* Thin fine-print bar (Claude-notif style): consent on welcome, data
+          handling on the upload step. Deliberately tiny and out of the way. */}
+      {step === 'welcome' && (
+        <FinePrintBar>
+          By continuing you agree to cookies and session analytics that help us improve this
+          preview. No personal account is created.
+        </FinePrintBar>
+      )}
+      {step === 'upload' && (
+        <FinePrintBar>
+          Your file never leaves your browser. We don't use it to train our AI, and nothing is
+          stored after this preview ends.
+        </FinePrintBar>
+      )}
+    </div>
+  )
+}
+
+/** Ultra-thin fine-print bar pinned to the bottom, styled after Claude's slim
+ *  in-chat notifications. Non-blocking and unobtrusive. */
+function FinePrintBar({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-2">
+      <p className="max-w-lg rounded-full border border-line bg-panel/85 px-3.5 py-1 text-center text-[10px] leading-relaxed text-ink-muted backdrop-blur-sm">
+        {children}
+      </p>
     </div>
   )
 }
