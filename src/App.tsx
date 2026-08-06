@@ -20,9 +20,11 @@ const INTRO_KEY = 'sw_intro_answers'
  *  the "book a call" conversion prompt. */
 const SHOWCASE = ['knowledge-check', 'principles', 'communication'] as const
 
-/** Nodes the knowledge check can test you out of (must NOT be showcase
- *  nodes, so the guided text step is never skipped). */
-const SKILL_NODE_ORDER = ['terminology', 'styles'] as const
+/** Nodes the knowledge check can test you out of (must NOT be showcase nodes,
+ *  so the guided text step is never skipped). terminology maps to the
+ *  fundamentals question, styles + expectations to the leadership question, so
+ *  all-correct tests out of three nodes and all-wrong tests out of none. */
+const SKILL_NODE_ORDER = ['terminology', 'styles', 'expectations'] as const
 
 /** Contact / book-a-demo link (UTM'd for this preview). */
 const BOOK_CALL_URL = 'https://hubs.ly/Q04rBJD30'

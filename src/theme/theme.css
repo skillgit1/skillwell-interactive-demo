@@ -86,7 +86,7 @@
   --color-node-available: #005e8d; /* Platform Blue              */
   --color-node-current: #005e8d;
   --color-node-complete: #23a566;  /* Passed/Completed green      */
-  --color-node-verified: #004853;  /* Ocean — tested-out skills  */
+  --color-node-verified: #00bf80;  /* Oasis: tested-out skills, distinct from in-progress blue */
   --color-edge: #ced5d7;           /* faded edges → locked nodes */
   --color-edge-strong: #33403f;    /* dark arrows (active path)  */
 
