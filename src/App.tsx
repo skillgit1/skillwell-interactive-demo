@@ -338,6 +338,21 @@ export default function App() {
   )
 }
 
+/** What a call actually delivers — kept concrete, not salesy. */
+const CALL_INCLUDES = [
+  'A simulation built around real scenarios from your team',
+  'A learning path that adapts to each learner',
+  'Skill data that shows what is actually working',
+]
+
+/** Services-team headshots for the modal footer. Drop the photos into
+ *  public/team/ as expert-1.jpg … expert-7.jpg. Any missing file falls back to
+ *  a neutral avatar, so the row never looks broken. */
+const TEAM = Array.from(
+  { length: 7 },
+  (_, i) => `${import.meta.env.BASE_URL}team/expert-${i + 1}.jpg`,
+)
+
 function ConversionModal({
   onBook,
   onDismiss,
@@ -372,11 +387,19 @@ function ConversionModal({
           You've seen a glimpse. The best part is on the call.
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          This is our simplest, self-guided build. On a quick call we can show you
-          simulations built for your team, how a learner's path adapts to them in real
-          time, and the designers who build it all with you. That is the part a preview
-          cannot capture.
+          The preview shows the basics. A quick call shows what we would actually build
+          for you:
         </p>
+        <div className="mt-4 space-y-2.5 rounded-xl bg-sunken/50 p-4 text-left">
+          {CALL_INCLUDES.map((item) => (
+            <div key={item} className="flex items-start gap-2.5">
+              <svg viewBox="0 0 24 24" className="mt-0.5 size-4 shrink-0 text-oasis" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              <span className="text-sm leading-snug text-ink">{item}</span>
+            </div>
+          ))}
+        </div>
         <button
           type="button"
           onClick={onBook}
@@ -394,6 +417,34 @@ function ConversionModal({
         >
           Keep exploring the preview
         </button>
+
+        {/* Services team — puts real humans behind the CTA */}
+        <div className="mt-6 border-t border-line pt-5">
+          <div className="flex justify-center -space-x-2.5">
+            {TEAM.map((src, i) => (
+              <span
+                key={i}
+                className="grid size-9 place-items-center overflow-hidden rounded-full border-2 border-panel bg-gradient-to-br from-primary-soft to-oasis/25 text-primary/70"
+              >
+                <svg viewBox="0 0 24 24" className="col-start-1 row-start-1 size-4" fill="currentColor" aria-hidden="true">
+                  <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Z" />
+                </svg>
+                <img
+                  src={src}
+                  alt=""
+                  className="col-start-1 row-start-1 h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </span>
+            ))}
+          </div>
+          <p className="mt-3 text-xs leading-relaxed text-ink-soft">
+            <span className="font-semibold text-ink">Skillwell's learning experts</span> help you
+            design custom simulations, build adaptive learning maps, and measure real skill growth.
+          </p>
+        </div>
       </motion.div>
     </div>
   )
