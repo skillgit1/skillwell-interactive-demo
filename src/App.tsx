@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { track } from './lib/track'
 import type { MapContent, NodeState } from './lib/types'
-import { personalize, getQuestions, minutesSaved, uniqueSkillCount, findIndustry, findTraining } from './lib/personalize'
+import { personalize, getQuestions, minutesSaved } from './lib/personalize'
 import type { IntroAnswers } from './lib/personalize'
 import { LearningMap } from './components/LearningMap'
 import { IntroFlow } from './components/IntroFlow'
@@ -31,22 +31,18 @@ type IntroState =
   | { phase: 'active' }
   | { phase: 'done'; answers: IntroAnswers | null }
 
-type Banner = 'built' | 'adapted' | null
-
-function loadIntroState(): { intro: IntroState; banner: Banner } {
+function loadIntroState(): IntroState {
   try {
     const raw = sessionStorage.getItem(INTRO_KEY)
-    if (raw) return { intro: { phase: 'done', answers: JSON.parse(raw) }, banner: null }
+    if (raw) return { phase: 'done', answers: JSON.parse(raw) }
   } catch {
     /* ignore */
   }
-  return { intro: { phase: 'active' }, banner: null }
+  return { phase: 'active' }
 }
 
 export default function App() {
-  const initial = useMemo(loadIntroState, [])
-  const [intro, setIntro] = useState<IntroState>(initial.intro)
-  const [banner, setBanner] = useState<Banner>(initial.banner)
+  const [intro, setIntro] = useState<IntroState>(loadIntroState)
   /** Runtime node-state overrides from the knowledge check (tested-out skills). */
   const [overrides, setOverrides] = useState<Record<string, NodeState> | null>(null)
   /** Progress through the guided 3-node showcase (0..3). */
@@ -64,16 +60,8 @@ export default function App() {
     track('demo_opened', { referrer: document.referrer || 'direct' })
   }, [])
 
-  // Story banners auto-dismiss so they never clutter. The "built" banner carries
-  // the map context, so it lingers longer to give the visitor time to read it.
-  useEffect(() => {
-    if (!banner) return
-    const id = setTimeout(() => setBanner(null), banner === 'built' ? 12000 : 8000)
-    return () => clearTimeout(id)
-  }, [banner])
-
   // Hold the Determine Knowledge popover until the visitor has taken in the map
-  // (and the build banner) for a few seconds.
+  // (and the learner-view bar) for a few seconds.
   useEffect(() => {
     if (intro.phase === 'active') {
       setPopoverReady(false)
@@ -90,14 +78,6 @@ export default function App() {
       /* ignore */
     }
     setIntro({ phase: 'done', answers })
-    if (answers) setBanner('built')
-  }, [])
-
-  // Dismissing the context banner early means the visitor is ready — show the
-  // popover right away rather than waiting out the timer.
-  const dismissBanner = useCallback(() => {
-    setBanner(null)
-    setPopoverReady(true)
   }, [])
 
   const restartIntro = useCallback(() => {
@@ -107,7 +87,6 @@ export default function App() {
       /* ignore */
     }
     setOverrides(null)
-    setBanner(null)
     setShowcaseStep(0)
     setPostPreview(null)
     setIntro({ phase: 'active' })
@@ -133,7 +112,6 @@ export default function App() {
         if (node?.skillTags.some((t) => verifiedTags.includes(t))) next[id] = 'verified'
       }
       setOverrides(next)
-      setBanner('adapted')
       handleNodeDone('knowledge-check')
     },
     [handleNodeDone],
@@ -181,10 +159,9 @@ export default function App() {
   const { scenario } = map
   const introActive = intro.phase === 'active'
 
-  const industryLabel = findIndustry(answers?.industry ?? null)?.label
-  const trainingLabel = findTraining(answers?.training ?? null)?.label
   const verifiedCount = map.nodes.filter((n) => n.state === 'verified').length
   const saved = minutesSaved(map)
+  const adapted = overrides !== null
 
   return (
     <div className="flex min-h-full flex-col">
@@ -273,50 +250,8 @@ export default function App() {
               </div>
             </div>
 
-            {/* Story banners */}
-            <AnimatePresence>
-              {banner === 'built' && (
-                <BannerCard key="built" onDismiss={dismissBanner} cta="Got it">
-                  {answers?.fileName ? (
-                    <>
-                      <p className="text-sm font-semibold">
-                        Built from your document, automatically.
-                      </p>
-                      <p className="mt-1 text-xs leading-relaxed text-white/85">
-                        Skillwell read “{answers.fileName}”, matched{' '}
-                        {uniqueSkillCount(map)} skills to its skills taxonomy, and
-                        assembled this adaptive path with its AI-powered skills
-                        development system. Now see the learner side: start with the
-                        knowledge check.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm font-semibold">
-                        Built for {industryLabel} · {trainingLabel}, in seconds.
-                      </p>
-                      <p className="mt-1 text-xs leading-relaxed text-white/85">
-                        Skillwell builds any type of training, for any industry. Now see
-                        the learner side: start with the knowledge check and watch this
-                        path adapt to you.
-                      </p>
-                    </>
-                  )}
-                </BannerCard>
-              )}
-              {banner === 'adapted' && (
-                <BannerCard key="adapted" onDismiss={dismissBanner} cta="Keep exploring">
-                  <p className="text-sm font-semibold">
-                    Your path just adapted. This is Skillwell working.
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-white/85">
-                    {verifiedCount > 0
-                      ? `You tested out of ${verifiedCount} ${verifiedCount === 1 ? 'activity' : 'activities'} (~${formatSaved(saved)} of seat time). Teal nodes are verified skills, and this keeps happening as real learners progress.`
-                      : 'Your full path is ready, and Skillwell will keep adapting it as you demonstrate skills along the way.'}
-                  </p>
-                </BannerCard>
-              )}
-            </AnimatePresence>
+            {/* Persistent LEARNER-view bar — mirrors the ADMIN bar on the report */}
+            <LearnerViewBar adapted={adapted} verifiedCount={verifiedCount} saved={saved} />
 
             <LearningMap
               content={map}
@@ -472,34 +407,45 @@ function ConversionModal({
   )
 }
 
-function BannerCard({
-  children,
-  onDismiss,
-  cta,
+/**
+ * Persistent bar above the learning map that labels it as the LEARNER view —
+ * the deliberate counterpart to the dark "ADMIN VIEW" bar on the Auto-Insights
+ * report. Always visible (not a dismissable popup), so the framing lands: this
+ * is a live, adaptive preview of what a single learner sees. After the knowledge
+ * check it flips to confirm the path adapted.
+ */
+function LearnerViewBar({
+  adapted,
+  verifiedCount,
+  saved,
 }: {
-  children: React.ReactNode
-  onDismiss: () => void
-  cta: string
+  adapted: boolean
+  verifiedCount: number
+  saved: number
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ delay: 0.35, duration: 0.35, ease: 'easeOut' }}
-      className="absolute left-1/2 top-14 z-10 w-full max-w-md -translate-x-1/2"
-    >
-      <div className="rounded-xl bg-suggest p-4 text-white shadow-[var(--shadow-overlay)]">
-        {children}
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="mt-3 rounded-btn bg-white px-3 py-1.5 text-xs font-bold text-suggest transition-colors hover:bg-white/90"
-        >
-          {cta}
-        </button>
-      </div>
-    </motion.div>
+    <div className="mb-3 flex flex-col gap-2 rounded-xl bg-primary px-4 py-3 text-white sm:flex-row sm:items-center sm:gap-3">
+      <span className="flex w-fit shrink-0 items-center gap-1.5 rounded-md bg-white/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
+        <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+        </svg>
+        Learner view
+      </span>
+      {adapted ? (
+        <p className="text-sm font-medium leading-snug text-white/95">
+          <span className="font-bold">The path just adapted for this learner.</span>{' '}
+          {verifiedCount > 0
+            ? `Teal nodes are skills they tested out of (~${formatSaved(saved)} saved). Every learner gets a different path.`
+            : 'Every learner gets a different path as they demonstrate skills.'}
+        </p>
+      ) : (
+        <p className="text-sm font-medium leading-snug text-white/95">
+          <span className="font-bold">This is the learner's view</span> — a live preview of an
+          adaptive learning map that rebuilds itself for each individual learner.
+        </p>
+      )}
+    </div>
   )
 }
 
