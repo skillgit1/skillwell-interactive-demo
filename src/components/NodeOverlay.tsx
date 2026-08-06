@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { MapNode } from '../lib/types'
 import type { CheckQuestion } from '../lib/personalize'
@@ -46,10 +46,17 @@ export function NodeOverlay({
   company: string
 }) {
   const openedAt = useRef<number>(0)
+  // On touch devices a tap fires a synthesized "ghost" click ~300ms later at the
+  // same screen point. The control that opened this overlay (e.g. the popover's
+  // Start button) often sits where the backdrop now is, so that ghost click would
+  // instantly dismiss the overlay. Ignore backdrop clicks until it settles.
+  const [armed, setArmed] = useState(false)
 
   useEffect(() => {
     if (!node) return
     openedAt.current = performance.now()
+    setArmed(false)
+    const armId = setTimeout(() => setArmed(true), 400)
     track('node_opened', {
       node_id: node.id,
       node_type: node.type,
@@ -57,7 +64,10 @@ export function NodeOverlay({
     })
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      clearTimeout(armId)
+      window.removeEventListener('keydown', onKey)
+    }
   }, [node, onClose])
 
   const close = () => {
@@ -82,7 +92,7 @@ export function NodeOverlay({
         >
           <div
             className="absolute inset-0 bg-navy-deep/40 backdrop-blur-sm"
-            onClick={close}
+            onClick={() => armed && close()}
           />
           <motion.div
             className={`relative z-10 flex max-h-[88vh] w-full flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-[var(--shadow-overlay)] ${

@@ -33,6 +33,7 @@ export function LearningMap({
   training,
   openableIds,
   onNodeDone,
+  showPopover = true,
 }: {
   content: MapContent
   questions: CheckQuestion[]
@@ -43,6 +44,8 @@ export function LearningMap({
   openableIds: string[]
   /** Signals a showcase node was finished, so the sequence advances. */
   onNodeDone: (nodeId: string) => void
+  /** Gate the "suggested next step" popover until the map context is read. */
+  showPopover?: boolean
 }) {
   const { nodes } = content
   const byId = useMemo(() => Object.fromEntries(nodes.map((n) => [n.id, n])), [nodes])
@@ -154,7 +157,7 @@ export function LearningMap({
             />
           ))}
 
-          {current && (
+          {current && showPopover && (
             <NodePopover node={current} onStart={() => handleNodeClick(current)} />
           )}
         </div>

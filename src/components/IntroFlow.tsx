@@ -11,12 +11,12 @@ type Step = 'welcome' | 'industry' | 'training' | 'upload' | 'flagged' | 'buildi
 
 const STEPS: Step[] = ['welcome', 'industry', 'training', 'upload']
 
-/** Staged "AI processing" beats shown while building from an uploaded doc. */
-const FILE_STAGES = [
-  'Reading your document…',
-  'Extracting skills with the Skillwell taxonomy…',
-  'Mapping skills to adaptive learning activities…',
-  'Assembling your learning map…',
+/** The three build beats shown while the map populates. Deliberately paced so
+ *  the visitor reads each one before the map is revealed. */
+const BUILD_STEPS = [
+  'Personalizing your learning map',
+  'Populating your custom content',
+  'Building the most effective learning paths',
 ]
 
 /**
@@ -39,7 +39,8 @@ export function IntroFlow({
   const [flagMessage, setFlagMessage] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
 
-  // Build beat: staged messages when a file was provided, quick otherwise.
+  // Paced build: advance through the three steps (~1.2s each) so the visitor
+  // reads them, hold on a "ready" beat, then reveal the map.
   useEffect(() => {
     if (step !== 'building') return
     const answers: IntroAnswers = {
@@ -47,15 +48,11 @@ export function IntroFlow({
       training: training ?? 'leadership',
       fileName,
     }
-    if (!fileName) {
-      const id = setTimeout(() => onDone(answers), 1700)
+    if (stage < BUILD_STEPS.length) {
+      const id = setTimeout(() => setStage(stage + 1), 1200)
       return () => clearTimeout(id)
     }
-    if (stage < FILE_STAGES.length - 1) {
-      const id = setTimeout(() => setStage(stage + 1), 1000)
-      return () => clearTimeout(id)
-    }
-    const id = setTimeout(() => onDone(answers), 1100)
+    const id = setTimeout(() => onDone(answers), 1500)
     return () => clearTimeout(id)
   }, [step, stage, fileName, industry, training, onDone])
 
@@ -317,48 +314,77 @@ export function IntroFlow({
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
-            <div className="mx-auto grid size-12 place-items-center">
-              <motion.span
-                className="size-10 rounded-full border-[3px] border-primary-soft border-t-primary"
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }}
-              />
-            </div>
-            {fileName ? (
+            {stage < BUILD_STEPS.length ? (
               <>
-                <AnimatePresence mode="wait">
-                  <motion.h2
-                    key={stage}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2 }}
-                    className="mt-4 font-display text-xl font-bold tracking-tight text-ink"
-                  >
-                    {FILE_STAGES[stage]}
-                  </motion.h2>
-                </AnimatePresence>
-                <p className="mt-2 truncate text-sm text-ink-soft">{fileName}</p>
-                <div className="mx-auto mt-4 flex max-w-[200px] gap-1.5">
-                  {FILE_STAGES.map((_, i) => (
-                    <span
-                      key={i}
-                      className={`h-1 flex-1 rounded-full transition-colors ${
-                        i <= stage ? 'bg-primary' : 'bg-sunken'
-                      }`}
-                    />
-                  ))}
-                </div>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                  Building your demo
+                </p>
+                <h2 className="mt-2 font-display text-xl font-bold tracking-tight text-ink">
+                  Creating your personalized learning experience
+                </h2>
+                {fileName && (
+                  <p className="mt-1 truncate text-sm text-ink-soft">From “{fileName}”</p>
+                )}
+                <ul className="mx-auto mt-6 flex max-w-xs flex-col gap-3.5 text-left">
+                  {BUILD_STEPS.map((label, i) => {
+                    const done = stage > i
+                    const current = stage === i
+                    return (
+                      <li key={label} className="flex items-center gap-3">
+                        <span
+                          className={`grid size-6 shrink-0 place-items-center rounded-full transition-colors ${
+                            done
+                              ? 'bg-oasis text-white'
+                              : current
+                                ? 'bg-primary-soft text-primary'
+                                : 'bg-sunken text-ink-muted'
+                          }`}
+                        >
+                          {done ? (
+                            <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 6L9 17l-5-5" />
+                            </svg>
+                          ) : current ? (
+                            <motion.span
+                              className="size-3 rounded-full border-2 border-primary/30 border-t-primary"
+                              animate={{ rotate: 360 }}
+                              transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+                            />
+                          ) : (
+                            <span className="size-1.5 rounded-full bg-current opacity-60" />
+                          )}
+                        </span>
+                        <span
+                          className={`text-sm font-medium transition-colors ${
+                            done || current ? 'text-ink' : 'text-ink-muted'
+                          }`}
+                        >
+                          {label}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
               </>
             ) : (
-              <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <motion.div
+                  className="mx-auto grid size-14 place-items-center rounded-full bg-oasis text-white"
+                  initial={{ scale: 0.4, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 15 }}
+                >
+                  <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </motion.div>
                 <h2 className="mt-4 font-display text-xl font-bold tracking-tight text-ink">
-                  Building your learning map…
+                  Your personalized learning demo is ready
                 </h2>
                 <p className="mt-2 text-sm text-ink-soft">
-                  In the real product, your team builds these in minutes. This one's on us.
+                  Here is the adaptive map we built for you.
                 </p>
-              </>
+              </motion.div>
             )}
           </motion.div>
         )}

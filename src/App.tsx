@@ -53,6 +53,9 @@ export default function App() {
   const [showcaseStep, setShowcaseStep] = useState(0)
   /** After all 3 nodes: show the admin insights report, then the CTA. */
   const [postPreview, setPostPreview] = useState<'insights' | 'convert' | null>(null)
+  /** The "suggested next step" popover waits until the visitor has had a moment
+   *  to read the map + the build banner, so it never covers that context. */
+  const [popoverReady, setPopoverReady] = useState(false)
 
   useEffect(() => {
     // If this browser consented on a prior visit, re-arm tracking before the
@@ -61,12 +64,24 @@ export default function App() {
     track('demo_opened', { referrer: document.referrer || 'direct' })
   }, [])
 
-  // Banners are one-time nudges — auto-dismiss so they never clutter.
+  // Story banners auto-dismiss so they never clutter. The "built" banner carries
+  // the map context, so it lingers longer to give the visitor time to read it.
   useEffect(() => {
     if (!banner) return
-    const id = setTimeout(() => setBanner(null), 7000)
+    const id = setTimeout(() => setBanner(null), banner === 'built' ? 12000 : 8000)
     return () => clearTimeout(id)
   }, [banner])
+
+  // Hold the Determine Knowledge popover until the visitor has taken in the map
+  // (and the build banner) for a few seconds.
+  useEffect(() => {
+    if (intro.phase === 'active') {
+      setPopoverReady(false)
+      return
+    }
+    const id = setTimeout(() => setPopoverReady(true), 4000)
+    return () => clearTimeout(id)
+  }, [intro.phase])
 
   const finishIntro = useCallback((answers: IntroAnswers | null) => {
     try {
@@ -76,6 +91,13 @@ export default function App() {
     }
     setIntro({ phase: 'done', answers })
     if (answers) setBanner('built')
+  }, [])
+
+  // Dismissing the context banner early means the visitor is ready — show the
+  // popover right away rather than waiting out the timer.
+  const dismissBanner = useCallback(() => {
+    setBanner(null)
+    setPopoverReady(true)
   }, [])
 
   const restartIntro = useCallback(() => {
@@ -254,7 +276,7 @@ export default function App() {
             {/* Story banners */}
             <AnimatePresence>
               {banner === 'built' && (
-                <BannerCard key="built" onDismiss={() => setBanner(null)} cta="Got it">
+                <BannerCard key="built" onDismiss={dismissBanner} cta="Got it">
                   {answers?.fileName ? (
                     <>
                       <p className="text-sm font-semibold">
@@ -283,7 +305,7 @@ export default function App() {
                 </BannerCard>
               )}
               {banner === 'adapted' && (
-                <BannerCard key="adapted" onDismiss={() => setBanner(null)} cta="Keep exploring">
+                <BannerCard key="adapted" onDismiss={dismissBanner} cta="Keep exploring">
                   <p className="text-sm font-semibold">
                     Your path just adapted. This is Skillwell working.
                   </p>
@@ -303,6 +325,7 @@ export default function App() {
               training={answers?.training ?? 'leadership'}
               openableIds={openableIds}
               onNodeDone={handleNodeDone}
+              showPopover={popoverReady}
             />
           </section>
         </main>
