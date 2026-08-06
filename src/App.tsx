@@ -152,7 +152,8 @@ export default function App() {
 
   const openBookCall = useCallback((where: string) => {
     track('cta_clicked', { cta_id: where })
-    window.open(BOOK_CALL_URL, '_blank', 'noopener,noreferrer')
+    // Book-a-demo navigates in the same tab (the sim launch stays a new tab).
+    window.location.href = BOOK_CALL_URL
   }, [])
 
   const questions = useMemo(() => getQuestions(answers), [answers])
@@ -341,11 +342,10 @@ function ConversionModal({
           </svg>
         </div>
         <h2 className="mt-4 font-display text-2xl font-bold tracking-tight text-ink">
-          You've seen a glimpse. The best part is on the call.
+          This is just a glimpse of Skillwell.
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          The preview shows the basics. A quick call shows what we would actually build
-          for you:
+          See the full platform by booking a call.
         </p>
         <div className="mt-4 space-y-2.5 rounded-xl bg-sunken/50 p-4 text-left">
           {CALL_INCLUDES.map((item) => (
