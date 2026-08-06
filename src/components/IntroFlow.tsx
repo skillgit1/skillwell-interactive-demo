@@ -105,7 +105,7 @@ export function IntroFlow({
     'w-full max-w-lg rounded-2xl bg-panel p-8 shadow-[var(--shadow-overlay)] border border-line text-center'
 
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-20 flex items-center justify-center p-4">
       <AnimatePresence mode="wait">
         {step === 'welcome' && (
           <motion.div
