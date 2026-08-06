@@ -345,11 +345,10 @@ const CALL_INCLUDES = [
   'Skill data that shows what is actually working',
 ]
 
-/** Services-team headshots for the modal footer. Drop the photos into
- *  public/team/ as expert-1.jpg … expert-7.jpg. Any missing file falls back to
- *  a neutral avatar, so the row never looks broken. */
+/** Services-team headshots for the modal footer, from public/team/. Any
+ *  missing file falls back to a neutral avatar, so the row never looks broken. */
 const TEAM = Array.from(
-  { length: 7 },
+  { length: 6 },
   (_, i) => `${import.meta.env.BASE_URL}team/expert-${i + 1}.jpg`,
 )
 
