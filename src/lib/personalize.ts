@@ -681,37 +681,6 @@ export function cleanFileName(name: string): string {
   return titled.length > 48 ? titled.slice(0, 48).trimEnd() + '…' : titled
 }
 
-/** Strip document-type words to get the subject, e.g. "Math 101 Syllabus" ->
- *  "Math 101", "Clinical Onboarding Manual" -> "Clinical Onboarding". */
-export function subjectFromFile(name: string): string {
-  const cleaned = cleanFileName(name).replace(/…$/, '').trim()
-  const stripped = cleaned
-    .replace(
-      /\b(syllabus|manual|guide|handbook|overview|document|doc|deck|slides?|notes|outline|curriculum|course|training|program|module|materials?|final|draft|copy of|version|v\d+)\b/gi,
-      '',
-    )
-    .replace(/\s+/g, ' ')
-    .trim()
-  return stripped.length >= 2 ? stripped : cleaned
-}
-
-/** When a document is uploaded we cannot read it server-side (it never leaves
- *  the browser), so the map is themed around the document's subject. Used ONLY
- *  on the upload path; the standard topic keeps its authored node titles. */
-function uploadNodeTitles(subject: string): Record<string, string> {
-  return {
-    terminology: `${subject}: Key Terms`,
-    styles: `${subject}: Core Concepts`,
-    communication: `${subject} in Practice`,
-    'practice-quiz': `${subject}: Practice Set`,
-    expectations: `${subject}: What to Master`,
-    milestone: `Checkpoint: ${subject}`,
-    'customer-king': `Applying ${subject}`,
-    'case-study': `Case Study: ${subject}`,
-    'final-assessment': `Verify: ${subject}`,
-  }
-}
-
 /** Unique skills across the map (what "the taxonomy mapped"), excluding baseline. */
 export function uniqueSkillCount(content: MapContent): number {
   const tags = new Set<string>()
@@ -730,16 +699,14 @@ export function personalize(base: MapContent, answers: IntroAnswers | null): Map
   const baseDesc = option?.description ?? engine.description
   const group = option?.group ?? engine.group
 
-  const course = answers.fileName ? cleanFileName(answers.fileName) : baseCourse
-  const description = answers.fileName
-    ? `Generated automatically from “${answers.fileName}”. Skillwell extracted the skills inside and mapped them to an adaptive path for ${industry.company} using its skills taxonomy.`
-    : baseDesc.replace(/\{company\}/g, industry.company)
-
-  // Uploading a document re-themes the whole map around its subject; otherwise
-  // the chosen topic keeps its authored node titles.
-  const nodeTitles = answers.fileName
-    ? uploadNodeTitles(subjectFromFile(answers.fileName))
-    : engine.nodeTitles
+  // We can't read the uploaded file on the static site (no AI backend), and raw
+  // filenames are unreliable ("images (1).png", "101.png"), so we never name the
+  // course after the file. An upload maps to the chosen topic's authored content.
+  // Truly reading the file → moderating it → naming and building a content-exact
+  // map is the AI upload pipeline (needs a backend that holds the Claude key).
+  const course = baseCourse
+  const description = baseDesc.replace(/\{company\}/g, industry.company)
+  const nodeTitles = engine.nodeTitles
 
   return {
     scenario: {
