@@ -14,11 +14,11 @@ import rawMap from './content/map.json'
 const baseMap = rawMap as unknown as MapContent
 const INTRO_KEY = 'sw_intro_answers'
 
-/** The guided 3-node preview, in order: knowledge check → simulation → a
- *  text lesson. These are the ONLY openable nodes; everything else on the
- *  map is visible (to show scale) but locked. Finishing all three triggers
- *  the "book a call" conversion prompt. */
-const SHOWCASE = ['knowledge-check', 'principles', 'communication'] as const
+/** The guided preview, in order: knowledge check → simulation → a text lesson
+ *  → the L&D skills dashboard (which opens the admin insights report). These are
+ *  the ONLY openable nodes; everything else is visible (to show scale) but
+ *  locked. Opening the dashboard is the last step before the conversion CTA. */
+const SHOWCASE = ['knowledge-check', 'principles', 'communication', 'skills-report'] as const
 
 /** Nodes the knowledge check can test you out of (must NOT be showcase nodes,
  *  so the guided text step is never skipped). terminology maps to the
@@ -65,16 +65,18 @@ export default function App() {
     track('demo_opened', { referrer: document.referrer || 'direct' })
   }, [])
 
-  // Hold the Determine Knowledge popover until the visitor has taken in the map
-  // (and the learner-view bar) for a few seconds.
+  // Hold the "suggested next step" popover for a beat after the map appears and
+  // after each guided step, so the just-adapted (teal) nodes are visible before
+  // the popover box covers that area.
   useEffect(() => {
     if (intro.phase === 'active') {
       setPopoverReady(false)
       return
     }
-    const id = setTimeout(() => setPopoverReady(true), 4000)
+    setPopoverReady(false)
+    const id = setTimeout(() => setPopoverReady(true), showcaseStep === 0 ? 4000 : 2800)
     return () => clearTimeout(id)
-  }, [intro.phase])
+  }, [intro.phase, showcaseStep])
 
   const finishIntro = useCallback((answers: IntroAnswers | null) => {
     try {
@@ -98,15 +100,22 @@ export default function App() {
     setIntro({ phase: 'active' })
   }, [])
 
-  /** Advance the guided sequence; after the 3rd node, open the admin report. */
+  /** Advance the guided sequence. The final step (the dashboard) opens the
+   *  report via handleOpenReport, so this only moves the highlight along. */
   const handleNodeDone = useCallback((nodeId: string) => {
     setShowcaseStep((s) => {
       if (SHOWCASE[s] !== nodeId) return s
-      const next = s + 1
-      if (next >= SHOWCASE.length) setPostPreview('insights')
-      return next
+      return s + 1
     })
   }, [])
+
+  /** The dashboard node opens the admin insights report, then marks the guided
+   *  sequence complete. Wired so the report is tied to "Your Skills Dashboard"
+   *  rather than appearing on its own after the lesson. */
+  const handleOpenReport = useCallback(() => {
+    setPostPreview('insights')
+    handleNodeDone('skills-report')
+  }, [handleNodeDone])
 
   /** The learner-side adaptivity moment: apply knowledge-check results, then
    *  advance the guided sequence to the simulation. */
@@ -253,7 +262,7 @@ export default function App() {
                   Personalize again
                 </button>
                 <span className="text-xs text-ink-muted">
-                  {showcaseStep >= 3 ? 'Preview complete' : 'Follow the highlighted step'}
+                  {showcaseStep >= SHOWCASE.length ? 'Preview complete' : 'Follow the highlighted step'}
                 </span>
               </div>
             </div>
@@ -268,6 +277,7 @@ export default function App() {
               training={answers?.training ?? 'leadership'}
               openableIds={openableIds}
               onNodeDone={handleNodeDone}
+              onOpenReport={handleOpenReport}
               showPopover={popoverReady}
               knownTags={knownTags}
             />

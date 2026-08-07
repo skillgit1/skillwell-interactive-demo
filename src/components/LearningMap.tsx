@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { MapContent, MapNode } from '../lib/types'
 import type { CheckQuestion } from '../lib/personalize'
@@ -33,6 +33,7 @@ export function LearningMap({
   training,
   openableIds,
   onNodeDone,
+  onOpenReport,
   showPopover = true,
   knownTags = [],
 }: {
@@ -45,6 +46,8 @@ export function LearningMap({
   openableIds: string[]
   /** Signals a showcase node was finished, so the sequence advances. */
   onNodeDone: (nodeId: string) => void
+  /** Opens the admin insights report; fired when the dashboard node is clicked. */
+  onOpenReport?: () => void
   /** Gate the "suggested next step" popover until the map context is read. */
   showPopover?: boolean
   /** Skill tags already answered correctly in the knowledge check. */
@@ -55,7 +58,27 @@ export function LearningMap({
   const current = nodes.find((n) => n.state === 'current') ?? null
 
   const [openNode, setOpenNode] = useState<MapNode | null>(null)
-  const { t, dragging, reset, zoomBy, handlers } = usePanZoom({ x: 26, y: 26, scale: 0.62 })
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const { t, dragging, reset, zoomBy, setTransform, handlers } = usePanZoom({ x: 26, y: 26, scale: 0.62 })
+
+  // Keep the current guided step centered so its popover is never off-screen
+  // (e.g. the far-right dashboard node on mobile). Skip the very first current
+  // node so the designed initial framing is preserved.
+  const prevCurrentId = useRef<string | null>(null)
+  useEffect(() => {
+    const el = canvasRef.current
+    if (current && el && prevCurrentId.current !== null && prevCurrentId.current !== current.id) {
+      const rect = el.getBoundingClientRect()
+      const { x, y } = current.position
+      setTransform((prev) => ({
+        scale: prev.scale,
+        x: rect.width / 2 - x * prev.scale,
+        y: rect.height / 2 - y * prev.scale,
+      }))
+    }
+    prevCurrentId.current = current?.id ?? null
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id, setTransform])
 
   const edges = useMemo(() => {
     const list: {
@@ -87,6 +110,11 @@ export function LearningMap({
   function handleNodeClick(node: MapNode) {
     // Only the guided showcase nodes are openable; the rest are preview-only.
     if (!openableIds.includes(node.id)) return
+    // The dashboard node opens the admin insights report, not a node overlay.
+    if (node.type === 'report') {
+      onOpenReport?.()
+      return
+    }
     setOpenNode(node)
   }
 
@@ -94,13 +122,14 @@ export function LearningMap({
     <div className="relative overflow-hidden rounded-2xl border border-line bg-[radial-gradient(circle_at_1px_1px,var(--color-line)_1px,transparent_0)] [background-size:22px_22px]">
       {/* Canvas */}
       <div
+        ref={canvasRef}
         className={`relative h-[540px] w-full touch-none select-none ${
           dragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         {...handlers}
       >
         <div
-          className="absolute left-0 top-0 origin-top-left"
+          className={`absolute left-0 top-0 origin-top-left ${dragging ? '' : 'transition-transform duration-500 ease-out'}`}
           style={{
             width: WORLD.w,
             height: WORLD.h,

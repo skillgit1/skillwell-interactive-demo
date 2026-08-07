@@ -79,6 +79,7 @@ export function usePanZoom(initial: Transform) {
     dragging,
     reset,
     zoomBy,
+    setTransform: setT,
     handlers: { onPointerDown, onPointerMove, onPointerUp, onWheel },
   }
 }
