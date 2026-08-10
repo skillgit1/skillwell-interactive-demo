@@ -122,11 +122,11 @@ export function LearningMap({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-line bg-[radial-gradient(circle_at_1px_1px,var(--color-line)_1px,transparent_0)] [background-size:22px_22px]">
+    <div className="relative overflow-hidden border-y border-line bg-[radial-gradient(circle_at_1px_1px,var(--color-line)_1px,transparent_0)] [background-size:22px_22px] sm:rounded-2xl sm:border">
       {/* Canvas */}
       <div
         ref={canvasRef}
-        className={`relative h-[540px] w-full touch-none select-none ${
+        className={`relative h-[72vh] w-full touch-none select-none sm:h-[540px] ${
           dragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         {...handlers}

@@ -202,13 +202,13 @@ export default function App() {
       {/* Everything below blurs while the intro flow is up */}
       <div className="relative flex-1">
         <main
-          className={`mx-auto w-full max-w-6xl px-6 py-6 transition-all duration-500 ${
+          className={`mx-auto w-full max-w-6xl px-4 py-4 transition-all duration-500 sm:px-6 sm:py-6 ${
             introActive ? 'pointer-events-none blur-md brightness-95' : ''
           }`}
           aria-hidden={introActive}
         >
-          {/* Breadcrumb */}
-          <nav className="flex flex-wrap items-center gap-1.5 text-sm text-ink-muted">
+          {/* Breadcrumb (hidden on mobile so the map gets the screen) */}
+          <nav className="hidden flex-wrap items-center gap-1.5 text-sm text-ink-muted sm:flex">
             {scenario.breadcrumb.map((crumb, i) => (
               <span key={crumb} className="flex items-center gap-1.5">
                 <span
@@ -226,13 +226,14 @@ export default function App() {
           </nav>
 
           {/* Course header */}
-          <div className="mt-4 flex items-start gap-4">
+          <div className="mt-2 flex items-start gap-3 sm:mt-4 sm:gap-4">
             <ProgressRing percent={scenario.percentComplete} />
             <div className="flex-1">
-              <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+              <h1 className="font-display text-xl font-semibold tracking-tight text-ink sm:text-2xl">
                 {scenario.course}
               </h1>
-              <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-ink-soft">
+              {/* Description is hidden on mobile to give the map room */}
+              <p className="mt-1.5 hidden max-w-3xl text-sm leading-relaxed text-ink-soft sm:block">
                 {scenario.description}
               </p>
               {answers?.fileName && (
@@ -248,7 +249,7 @@ export default function App() {
           </div>
 
           {/* The learning map */}
-          <section className="relative mt-6">
+          <section className="relative mt-4 sm:mt-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
                 Learning map
@@ -270,17 +271,20 @@ export default function App() {
             {/* Persistent LEARNER-view bar — mirrors the ADMIN bar on the report */}
             <LearnerViewBar adapted={adapted} verifiedCount={verifiedCount} saved={saved} />
 
-            <LearningMap
-              content={map}
-              questions={questions}
-              onCheckComplete={handleCheckComplete}
-              training={answers?.training ?? 'leadership'}
-              openableIds={openableIds}
-              onNodeDone={handleNodeDone}
-              onOpenReport={handleOpenReport}
-              showPopover={popoverReady}
-              knownTags={knownTags}
-            />
+            {/* Full-bleed on mobile so the map spans the whole screen */}
+            <div className="-mx-4 sm:mx-0">
+              <LearningMap
+                content={map}
+                questions={questions}
+                onCheckComplete={handleCheckComplete}
+                training={answers?.training ?? 'leadership'}
+                openableIds={openableIds}
+                onNodeDone={handleNodeDone}
+                onOpenReport={handleOpenReport}
+                showPopover={popoverReady}
+                knownTags={knownTags}
+              />
+            </div>
           </section>
         </main>
 
@@ -442,25 +446,33 @@ function LearnerViewBar({
   saved: number
 }) {
   return (
-    <div className="mb-3 flex flex-col gap-2 rounded-xl bg-primary px-4 py-3 text-white sm:flex-row sm:items-center sm:gap-3">
-      <span className="flex w-fit shrink-0 items-center gap-1.5 rounded-md bg-white/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide">
-        <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <div className="mb-2 flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-white sm:mb-3 sm:gap-3 sm:rounded-xl sm:px-4 sm:py-3">
+      <span className="flex shrink-0 items-center gap-1.5 rounded-md bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide sm:px-2.5 sm:py-1 sm:text-xs">
+        <svg viewBox="0 0 24 24" className="size-3 sm:size-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
           <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
         </svg>
         Learner view
       </span>
       {adapted ? (
-        <p className="text-sm font-medium leading-snug text-white/95">
-          <span className="font-bold">The path just adapted for this learner.</span>{' '}
-          {verifiedCount > 0
-            ? `Teal nodes are skills they tested out of (~${formatSaved(saved)} saved). Every learner gets a different path.`
-            : 'Every learner gets a different path as they demonstrate skills.'}
+        <p className="truncate text-xs font-medium leading-snug text-white/95 sm:whitespace-normal sm:text-sm">
+          {/* Short on mobile, full on desktop */}
+          <span className="sm:hidden">Path adapted for this learner.</span>
+          <span className="hidden sm:inline">
+            <span className="font-bold">The path just adapted for this learner.</span>{' '}
+            {verifiedCount > 0
+              ? `Teal nodes are skills they tested out of (~${formatSaved(saved)} saved). Every learner gets a different path.`
+              : 'Every learner gets a different path as they demonstrate skills.'}
+          </span>
         </p>
       ) : (
-        <p className="text-sm font-medium leading-snug text-white/95">
-          <span className="font-bold">This is the learner's view</span> — a live preview of an
-          adaptive learning map that rebuilds itself for each individual learner.
+        <p className="truncate text-xs font-medium leading-snug text-white/95 sm:whitespace-normal sm:text-sm">
+          {/* Short on mobile, full on desktop */}
+          <span className="sm:hidden">A live, adaptive preview.</span>
+          <span className="hidden sm:inline">
+            <span className="font-bold">This is the learner's view,</span> a live preview of an
+            adaptive learning map that rebuilds itself for each individual learner.
+          </span>
         </p>
       )}
     </div>
