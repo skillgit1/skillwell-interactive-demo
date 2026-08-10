@@ -59,7 +59,10 @@ export function LearningMap({
 
   const [openNode, setOpenNode] = useState<MapNode | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
-  const { t, dragging, reset, zoomBy, setTransform, handlers } = usePanZoom({ x: 26, y: 26, scale: 0.62 })
+  const { t, dragging, reset, zoomBy, setTransform, handlers } = usePanZoom(
+    { x: 26, y: 26, scale: 0.62 },
+    WORLD,
+  )
 
   // Keep the current guided step centered so its popover is never off-screen
   // (e.g. the far-right dashboard node on mobile). Skip the very first current
