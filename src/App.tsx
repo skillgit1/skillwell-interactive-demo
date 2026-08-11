@@ -184,7 +184,9 @@ export default function App() {
     <div className="flex min-h-full flex-col">
       {/* Top chrome */}
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-panel px-6 py-3">
-        <Logo />
+        <a href="https://www.skillwell.com/" aria-label="Skillwell home" className="inline-flex">
+          <Logo />
+        </a>
         <div className="flex items-center gap-3">
           <button
             type="button"
