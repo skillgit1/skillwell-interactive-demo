@@ -23,12 +23,9 @@ const ENGAGED = 35
 const COMPLETED = 24
 const COMPLETED_PCT = 68.6
 const NOT_PCT = 31.4
-const OVER_TIME = [
-  { month: "Feb '26", learners: 19 },
-  { month: "Mar '26", learners: 0 },
-  { month: "Apr '26", learners: 3 },
-  { month: "May '26", learners: 2 },
-]
+// Illustrative learner counts; the month labels are computed live (the trailing
+// months ending at the current month) so the trend never reads as stale.
+const OVER_TIME_COUNTS = [19, 0, 3, 2]
 // Fixed template scores; skill LABELS come from the visitor's topic.
 const FIRST_SCORES = [67.6, 69.6, 72.3, 56.8, 65.0, 68.4, 67.0]
 const IMPROVE = [
@@ -152,6 +149,18 @@ export function AutoInsightsReport({
   const skillsFirst = skills.map((skill, i) => ({ skill, score: FIRST_SCORES[i] }))
   const improvements = skills.map((skill, i) => ({ skill, ...IMPROVE[i] }))
 
+  // Dates are computed live so the report always reads as freshly generated.
+  // Month and year only, to keep it simple and avoid a stale hardcoded day.
+  const now = new Date()
+  const monthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const rangeStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const shortMonth = (d: Date) =>
+    `${d.toLocaleDateString('en-US', { month: 'short' })} '${String(d.getFullYear()).slice(-2)}`
+  const overTime = OVER_TIME_COUNTS.map((value, i) => ({
+    label: shortMonth(new Date(now.getFullYear(), now.getMonth() - (OVER_TIME_COUNTS.length - 1 - i), 1)),
+    value,
+  }))
+
   useEffect(() => {
     track('insights_viewed', { training })
   }, [training])
@@ -207,8 +216,8 @@ export function AutoInsightsReport({
               <p className="mt-1 text-sm text-ink-soft">{company} · Immersive Simulation</p>
             </div>
             <div className="hidden text-right text-xs text-ink-muted sm:block">
-              <p>Report generated: Jun 1, 2026</p>
-              <p>Data included: Jan 31, 2026 to May 31, 2026</p>
+              <p>Report generated: {monthYear(now)}</p>
+              <p>Data included: {monthYear(rangeStart)} to {monthYear(now)}</p>
             </div>
           </div>
 
@@ -264,10 +273,7 @@ export function AutoInsightsReport({
             title="Learner Engagement Over Time"
             desc="Unique learners who complete an attempt, by month of completion."
           >
-            <VBars
-              data={OVER_TIME.map((d) => ({ label: d.month, value: d.learners }))}
-              color={BLUE}
-            />
+            <VBars data={overTime} color={BLUE} />
             <Note>
               Engagement spikes at rollout, then tails off. Admins spot the drop-off and re-engage
               learners, <span className="font-bold">before</span> a program quietly stalls.
