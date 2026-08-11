@@ -208,12 +208,12 @@ export function AutoInsightsReport({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-primary">
-                Simulation Insights
+                Learning Report
               </p>
               <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-ink">
                 {course}
               </h2>
-              <p className="mt-1 text-sm text-ink-soft">{company} · Immersive Simulation</p>
+              <p className="mt-1 text-sm text-ink-soft">{company} · Adaptive Learning</p>
             </div>
             <div className="hidden text-right text-xs text-ink-muted sm:block">
               <p>Report generated: {monthYear(now)}</p>
@@ -224,13 +224,13 @@ export function AutoInsightsReport({
           <Note>
             This is the <span className="font-bold">course-creator's dashboard</span>, a live view of
             how a whole cohort is performing. Skillwell generates it automatically from every learner's
-            simulation attempts.
+            attempts.
           </Note>
 
           {/* Learner Engagement */}
           <Section
             title="Learner Engagement"
-            desc="Unique learners who have engaged with the simulation: how many started, completed an attempt, and retried."
+            desc="Unique learners who have engaged with this training: how many started, completed an attempt, and retried."
           >
             <div className="grid gap-8 sm:grid-cols-2">
               <div className="flex items-center gap-6">
@@ -247,8 +247,8 @@ export function AutoInsightsReport({
                     <span className="text-ink-muted">{NOT_PCT}% (11)</span>
                   </p>
                   <p className="pt-2 text-ink-soft">
-                    <span className="font-bold text-ink">{ENGAGED}</span> learners engaged with the
-                    simulation.
+                    <span className="font-bold text-ink">{ENGAGED}</span> learners engaged with this
+                    training.
                   </p>
                 </div>
               </div>
@@ -366,7 +366,7 @@ export function AutoInsightsReport({
           {/* Footer CTA within report */}
           <div className="border-t border-line py-7 text-center">
             <p className="text-sm text-ink-soft">
-              This report is generated automatically for every Skillwell simulation.
+              This report is generated automatically for every Skillwell course.
             </p>
             <button
               type="button"
