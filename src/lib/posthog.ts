@@ -24,7 +24,10 @@ export function initPostHog() {
     person_profiles: 'identified_only',
     opt_out_capturing_by_default: true,
     session_recording: {
-      maskAllInputs: false,
+      // Mask typed input if session replay is ever enabled later, so nothing a
+      // visitor types can be captured. There are no text inputs today, but this
+      // stays safe by default.
+      maskAllInputs: true,
     },
   })
 

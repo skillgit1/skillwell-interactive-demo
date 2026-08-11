@@ -23,7 +23,8 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
-        run: npm install
+        # Reproducible, lockfile-pinned install (fails if package-lock drifts).
+        run: npm ci
       # Build with Vite only (skip tsc). Relative base makes the site work at
       # the /<repo>/ Pages subpath without hardcoding the repo name.
       - name: Build
