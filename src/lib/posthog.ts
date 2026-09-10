@@ -18,6 +18,8 @@ export function initPostHog() {
 
   posthog.init('phc_r5XKDVrufrZTnNmtA2eGAHEaZmZoogXok5pAwajRSxv3', {
     api_host: 'https://us.i.posthog.com',
+    cross_subdomain_cookie: true, // share the cookie on .tryskillwell.com so a
+    // person is recognized across the apex and the preview subdomain
     autocapture: false,
     capture_pageview: false,
     capture_pageleave: false,
