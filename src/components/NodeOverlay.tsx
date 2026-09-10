@@ -28,6 +28,7 @@ export function NodeOverlay({
   onClose,
   questions,
   onCheckComplete,
+  countVerified,
   onNodeDone,
   training,
   company,
@@ -39,6 +40,9 @@ export function NodeOverlay({
   questions: CheckQuestion[]
   /** Fired when the knowledge check finishes; caller adapts the map. */
   onCheckComplete: (verifiedTags: string[]) => void
+  /** How many skill nodes the verified tags test out — so the result's
+   *  "verified N skills" matches the teal nodes the map will show. */
+  countVerified: (verifiedTags: string[]) => number
   /** Fired when a sim/text showcase node is finished; advances the sequence. */
   onNodeDone: (nodeId: string) => void
   /** Chosen training id — selects the default lesson library. */
@@ -151,6 +155,7 @@ export function NodeOverlay({
                 {node.type === 'check' && node.state !== 'completed' ? (
                   <KnowledgeCheck
                     questions={questions}
+                    countVerified={countVerified}
                     onFinish={(tags) => {
                       onCheckComplete(tags)
                       onClose()

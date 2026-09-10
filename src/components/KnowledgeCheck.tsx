@@ -12,9 +12,13 @@ import { Icon } from './Icon'
  */
 export function KnowledgeCheck({
   questions,
+  countVerified,
   onFinish,
 }: {
   questions: CheckQuestion[]
+  /** How many skill nodes these correct tags test out — the count the map will
+   *  show as teal. Falls back to the raw correct-answer count if absent. */
+  countVerified?: (verifiedTags: string[]) => number
   onFinish: (verifiedTags: string[]) => void
 }) {
   const [index, setIndex] = useState(0)
@@ -53,7 +57,12 @@ export function KnowledgeCheck({
   }
 
   if (done) {
-    const n = correctTags.length
+    // Count the skill nodes these answers actually test out, so this number
+    // matches the teal nodes the map will show. `total` is the max testable.
+    const n = countVerified ? countVerified(correctTags) : correctTags.length
+    const total = countVerified
+      ? countVerified(questions.map((q) => q.skillTag))
+      : questions.length
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -64,10 +73,10 @@ export function KnowledgeCheck({
           <Icon name="shield" className="size-7" strokeWidth={2.5} />
         </div>
         <h3 className="mt-4 font-display text-xl font-bold text-ink">
-          {n === questions.length
+          {n > 0 && n === total
             ? 'You knew all of it.'
             : n > 0
-              ? `You already know ${n} of ${questions.length} skills.`
+              ? `You already know ${n} of ${total} skills.`
               : "Great. Now we know where to start."}
         </h3>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">

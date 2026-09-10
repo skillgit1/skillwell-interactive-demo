@@ -26,6 +26,21 @@ const SHOWCASE = ['knowledge-check', 'principles', 'communication', 'skills-repo
  *  all-correct tests out of three nodes and all-wrong tests out of none. */
 const SKILL_NODE_ORDER = ['terminology', 'styles', 'expectations'] as const
 
+/** The showcase skill-nodes a given set of verified tags will test out. Shared
+ *  by the check result copy and the map so the "verified N skills" number always
+ *  matches the teal (tested-out) nodes the learner actually sees. */
+function testedOutIds(verifiedTags: string[]): string[] {
+  return SKILL_NODE_ORDER.filter((id) => {
+    const node = baseMap.nodes.find((n) => n.id === id)
+    return Boolean(node?.skillTags.some((t) => verifiedTags.includes(t)))
+  })
+}
+
+/** How many nodes those tags actually test out of (0 to SKILL_NODE_ORDER.length). */
+function countTestedOut(verifiedTags: string[]): number {
+  return testedOutIds(verifiedTags).length
+}
+
 /** Contact / book-a-demo link (UTM'd for this preview). */
 const BOOK_CALL_URL = 'https://hubs.ly/Q04rBJD30'
 
@@ -122,10 +137,7 @@ export default function App() {
   const handleCheckComplete = useCallback(
     (verifiedTags: string[]) => {
       const next: Record<string, NodeState> = {}
-      for (const id of SKILL_NODE_ORDER) {
-        const node = baseMap.nodes.find((n) => n.id === id)
-        if (node?.skillTags.some((t) => verifiedTags.includes(t))) next[id] = 'verified'
-      }
+      for (const id of testedOutIds(verifiedTags)) next[id] = 'verified'
       setOverrides(next)
       setKnownTags(verifiedTags)
       handleNodeDone('knowledge-check')
@@ -279,6 +291,7 @@ export default function App() {
                 content={map}
                 questions={questions}
                 onCheckComplete={handleCheckComplete}
+                countVerified={countTestedOut}
                 training={answers?.training ?? 'leadership'}
                 openableIds={openableIds}
                 onNodeDone={handleNodeDone}
@@ -456,15 +469,22 @@ function LearnerViewBar({
         </svg>
         Learner view
       </span>
-      {adapted ? (
+      {adapted && verifiedCount > 0 ? (
         <p className="truncate text-xs font-medium leading-snug text-white/95 sm:whitespace-normal sm:text-sm">
           {/* Short on mobile, full on desktop */}
           <span className="sm:hidden">Path adapted for this learner.</span>
           <span className="hidden sm:inline">
             <span className="font-bold">The path just adapted for this learner.</span>{' '}
-            {verifiedCount > 0
-              ? `Teal nodes are skills they tested out of (~${formatSaved(saved)} saved). Every learner gets a different path.`
-              : 'Every learner gets a different path as they demonstrate skills.'}
+            {`Teal nodes are skills they tested out of (~${formatSaved(saved)} saved). Every learner gets a different path.`}
+          </span>
+        </p>
+      ) : adapted ? (
+        <p className="truncate text-xs font-medium leading-snug text-white/95 sm:whitespace-normal sm:text-sm">
+          {/* Check taken, but nothing tested out — do not claim the path changed */}
+          <span className="sm:hidden">Full path kept for this learner.</span>
+          <span className="hidden sm:inline">
+            <span className="font-bold">Skillwell kept the full path for this learner.</span>{' '}
+            They start from the ground up, and the map keeps adapting as they learn.
           </span>
         </p>
       ) : (

@@ -30,6 +30,7 @@ export function LearningMap({
   content,
   questions,
   onCheckComplete,
+  countVerified,
   training,
   openableIds,
   onNodeDone,
@@ -40,6 +41,9 @@ export function LearningMap({
   content: MapContent
   questions: CheckQuestion[]
   onCheckComplete: (verifiedTags: string[]) => void
+  /** How many skill nodes a set of verified tags tests out — used so the check
+   *  result's "verified N skills" matches the teal nodes on the map. */
+  countVerified: (verifiedTags: string[]) => number
   /** Chosen training id — selects the default lesson library. */
   training: string
   /** Ids of nodes the visitor may open (the guided showcase so far). */
@@ -224,6 +228,7 @@ export function LearningMap({
         onClose={() => setOpenNode(null)}
         questions={questions}
         onCheckComplete={onCheckComplete}
+        countVerified={countVerified}
         onNodeDone={onNodeDone}
         training={training}
         company={content.scenario.company}
