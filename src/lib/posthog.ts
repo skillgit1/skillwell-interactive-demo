@@ -12,8 +12,17 @@ let started = false
 
 const CONSENT_KEY = 'sw_consent'
 
+/**
+ * Staging (tryskillwell.com/staging/) must never be tracked, so experiments
+ * can't pollute production analytics or the landing to demo funnel. Every
+ * entry point below no-ops there: PostHog never initializes, no sink is wired,
+ * and no event is ever sent (track() just buffers harmlessly).
+ */
+const TRACKING_DISABLED =
+  typeof window !== 'undefined' && window.location.pathname.startsWith('/staging')
+
 export function initPostHog() {
-  if (started || typeof window === 'undefined') return
+  if (TRACKING_DISABLED || started || typeof window === 'undefined') return
   started = true
 
   posthog.init('phc_r5XKDVrufrZTnNmtA2eGAHEaZmZoogXok5pAwajRSxv3', {
@@ -43,6 +52,7 @@ export function initPostHog() {
  * reload mid-session re-arms tracking without re-showing the intro.
  */
 export function grantConsent() {
+  if (TRACKING_DISABLED) return
   if (!started) initPostHog()
   posthog.opt_in_capturing()
   enableTracking()
@@ -58,6 +68,7 @@ export function grantConsent() {
  * so events flow even when the intro (session-gated) doesn't re-render.
  */
 export function restoreConsent() {
+  if (TRACKING_DISABLED) return
   try {
     if (localStorage.getItem(CONSENT_KEY) === 'granted') grantConsent()
   } catch {
