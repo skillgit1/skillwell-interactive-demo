@@ -1,8 +1,15 @@
 name: Deploy demo to GitHub Pages
 
+# GitHub Pages serves ONE site per repo, and each deploy replaces the whole
+# thing. To get a staging environment we build both branches into a single
+# artifact: `main` at the site root (production, tryskillwell.com) and the
+# `staging` branch at the /staging/ subpath (tryskillwell.com/staging/).
+# Pushing either branch redeploys the combined site. A broken staging build
+# is non-fatal, so it can never block a production deploy.
+
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
   workflow_dispatch:
 
 permissions:
@@ -12,7 +19,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -22,19 +29,45 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install dependencies
-        # Reproducible, lockfile-pinned install (fails if package-lock drifts).
-        run: npm ci
-      # Build with Vite only (skip tsc). Relative base makes the site work at
-      # the /<repo>/ Pages subpath without hardcoding the repo name.
-      - name: Build
-        run: npx vite build --base=./
+
+      # ---- Production (main) -> site root -------------------------------
+      # Relative base keeps assets working at both the apex and the /staging/
+      # subpath without hardcoding a path.
+      - name: Build production (main)
+        run: |
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/main:refs/remotes/origin/main
+          git checkout --force origin/main
+          npm ci
+          npx vite build --base=./ --outDir _site
+
+      # ---- Staging branch -> /staging/ subpath --------------------------
+      # Only if the branch exists. Built into a temp dir first, then copied,
+      # so a failed staging build leaves production untouched. Marked noindex
+      # so it never shows up in search.
+      - name: Build staging (if the branch exists)
+        run: |
+          if git fetch --no-tags --prune --depth=1 origin +refs/heads/staging:refs/remotes/origin/staging; then
+            git checkout --force origin/staging
+            npm ci
+            if npx vite build --base=./ --outDir _staging_dist; then
+              rm -rf _site/staging
+              mkdir -p _site/staging
+              cp -R _staging_dist/. _site/staging/
+              sed -i 's#<head>#<head><meta name="robots" content="noindex, nofollow">#' _site/staging/index.html
+              echo "Staging deployed to /staging/"
+            else
+              echo "::warning::Staging build failed; deploying production only."
+            fi
+          else
+            echo "No staging branch yet; deploying production only."
+          fi
+
       - uses: actions/configure-pages@v5
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./_site
 
   deploy:
     needs: build
