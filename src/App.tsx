@@ -6,7 +6,7 @@ import { personalize, getQuestions, minutesSaved } from './lib/personalize'
 import type { IntroAnswers } from './lib/personalize'
 import { LearningMap } from './components/LearningMap'
 import { AutoInsightsReport } from './components/AutoInsightsReport'
-import { restoreConsent } from './lib/posthog'
+import { initPostHog, restoreConsent } from './lib/posthog'
 import { Logo } from './components/Logo'
 import { DesktopOnboarding } from './components/DesktopOnboarding'
 import rawMap from './content/map.json'
@@ -74,8 +74,10 @@ export default function App() {
   const [knownTags, setKnownTags] = useState<string[]>([])
 
   useEffect(() => {
-    // If this browser consented on a prior visit, re-arm tracking before the
-    // first event (the intro is session-gated and may not re-render).
+    // Initialize PostHog on load so a $pageview is captured for every visitor
+    // (anonymous, cookie-based). Our own typed events still wait for consent.
+    initPostHog()
+    // If this browser consented on a prior visit, re-arm typed-event tracking.
     restoreConsent()
     track('demo_opened', { referrer: document.referrer || 'direct' })
   }, [])

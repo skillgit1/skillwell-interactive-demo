@@ -2,10 +2,12 @@ import posthog from 'posthog-js'
 import { enableTracking, setAnalyticsSink } from './track'
 
 /**
- * PostHog wiring. Config per the PostHog project setup (project 530617):
- * anonymous-first (identified_only), autocapture off (we send explicit typed
- * events), and capturing OFF until the visitor consents. On consent we opt in
- * and flip our own tracking gate; every track() call then flows to PostHog.
+ * PostHog wiring. A $pageview is captured for every visitor on load
+ * (anonymous, cookie-based, no PII). Person profiles are created only on
+ * explicit identify (person_profiles: 'identified_only'). The cross-subdomain
+ * cookie links sessions across tryskillwell.com and preview.tryskillwell.com.
+ * Our own typed events still flow through track() behind its consent gate;
+ * the consent / opt-in / identify functions below are unchanged.
  */
 
 let started = false
@@ -27,19 +29,9 @@ export function initPostHog() {
 
   posthog.init('phc_r5XKDVrufrZTnNmtA2eGAHEaZmZoogXok5pAwajRSxv3', {
     api_host: 'https://us.i.posthog.com',
-    cross_subdomain_cookie: true, // share the cookie on .tryskillwell.com so a
-    // person is recognized across the apex and the preview subdomain
-    autocapture: false,
-    capture_pageview: false,
-    capture_pageleave: false,
-    person_profiles: 'identified_only',
-    opt_out_capturing_by_default: true,
-    session_recording: {
-      // Mask typed input if session replay is ever enabled later, so nothing a
-      // visitor types can be captured. There are no text inputs today, but this
-      // stays safe by default.
-      maskAllInputs: true,
-    },
+    capture_pageview: true, // fire $pageview for every visitor on load
+    person_profiles: 'identified_only', // no person profile until identify()
+    cross_subdomain_cookie: true, // link tryskillwell.com <-> preview.tryskillwell.com
   })
 
   // Route all of our typed events through PostHog (only sends once consented).
