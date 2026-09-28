@@ -107,6 +107,24 @@ export const HIGHER_ED_TRAININGS: TrainingOption[] = [
       "In this course, students build core skills across science, technology, engineering, and math with adaptive, mastery-based practice tailored to each learner at {company}.",
   },
   {
+    id: 'he-economics',
+    label: 'Economics',
+    engine: 'onboarding',
+    group: 'Academics',
+    course: 'Economics',
+    description:
+      "In this course, students master the fundamentals of micro and macroeconomics through adaptive, mastery-based practice that meets each learner where they are at {company}.",
+  },
+  {
+    id: 'he-business',
+    label: 'Business',
+    engine: 'sales',
+    group: 'Academics',
+    course: 'Business',
+    description:
+      "In this course, students build core business skills across management, marketing, and finance with adaptive coursework tailored to each learner at {company}.",
+  },
+  {
     id: 'he-social',
     label: 'Social Sciences',
     engine: 'leadership',
