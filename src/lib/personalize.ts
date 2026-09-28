@@ -108,8 +108,10 @@ export const HIGHER_ED_TRAININGS: TrainingOption[] = [
   },
   {
     id: 'he-economics',
+    // Dedicated map titles + questions live in TRAINING_CONTENT['he-economics'];
+    // the engine only backs the generic lesson fallback, so keep it neutral.
     label: 'Economics',
-    engine: 'onboarding',
+    engine: 'leadership',
     group: 'Academics',
     course: 'Economics',
     description:
@@ -117,8 +119,10 @@ export const HIGHER_ED_TRAININGS: TrainingOption[] = [
   },
   {
     id: 'he-business',
+    // Dedicated map titles + questions live in TRAINING_CONTENT['he-business'];
+    // the engine only backs the generic lesson fallback, so keep it neutral.
     label: 'Business',
-    engine: 'sales',
+    engine: 'leadership',
     group: 'Academics',
     course: 'Business',
     description:
@@ -680,6 +684,98 @@ const TRAINING_CONTENT: Record<string, TrainingContent> = {
           { label: 'Listen as much as they speak', correct: true },
           { label: 'Talk the most in every room' },
           { label: 'Avoid asking questions' },
+        ],
+      },
+    ],
+  },
+
+  'he-economics': {
+    group: 'Academics',
+    course: 'Economics',
+    description:
+      "In this course, students master the fundamentals of micro and macroeconomics through adaptive, mastery-based practice that meets each learner where they are at {company}.",
+    nodeTitles: {
+      terminology: 'Key Economic Terms',
+      styles: 'Supply & Demand',
+      communication: 'Markets & Prices',
+      'practice-quiz': 'Problem Set Practice',
+      expectations: 'Micro vs Macro',
+      milestone: 'Checkpoint: Core Models',
+      'customer-king': 'Economic Policy',
+      'final-assessment': 'Verify: Economics Foundations',
+    },
+    questions: [
+      {
+        q: 'In economics, scarcity refers to…',
+        skillTag: 'fundamentals',
+        options: [
+          { label: 'Limited resources against unlimited wants', correct: true },
+          { label: 'Simply running out of money' },
+          { label: 'A shortage caused by hoarding' },
+        ],
+      },
+      {
+        q: 'If demand rises while supply stays fixed, the price usually…',
+        skillTag: 'leadership',
+        options: [
+          { label: 'Rises', correct: true },
+          { label: 'Falls' },
+          { label: 'Stays exactly the same' },
+        ],
+      },
+      {
+        q: 'A market reaches equilibrium when…',
+        skillTag: 'communication',
+        options: [
+          { label: 'Quantity supplied equals quantity demanded', correct: true },
+          { label: 'The government sets the price' },
+          { label: 'Sellers stop producing' },
+        ],
+      },
+    ],
+  },
+
+  'he-business': {
+    group: 'Academics',
+    course: 'Business',
+    description:
+      "In this course, students build core business skills across management, marketing, and finance with adaptive coursework tailored to each learner at {company}.",
+    nodeTitles: {
+      terminology: 'Key Business Concepts',
+      styles: 'Management Fundamentals',
+      communication: 'Marketing & the Customer',
+      'practice-quiz': 'Case Study Practice',
+      expectations: 'Financial Statements',
+      milestone: 'Checkpoint: Core Concepts',
+      'customer-king': 'Business Strategy',
+      'final-assessment': 'Verify: Business Foundations',
+    },
+    questions: [
+      {
+        q: "Which best describes a company's revenue?",
+        skillTag: 'fundamentals',
+        options: [
+          { label: 'Total income from sales before costs', correct: true },
+          { label: 'Profit left after all expenses' },
+          { label: 'Money the company owes its suppliers' },
+        ],
+      },
+      {
+        q: 'A manager delegating a project should…',
+        skillTag: 'leadership',
+        options: [
+          { label: 'Set clear goals, then trust the team to execute', correct: true },
+          { label: 'Keep the important parts and do them alone' },
+          { label: 'Avoid checking in so the team feels free' },
+        ],
+      },
+      {
+        q: 'The core purpose of marketing is to…',
+        skillTag: 'communication',
+        options: [
+          { label: 'Understand and meet customer needs profitably', correct: true },
+          { label: 'Spend as much as possible on advertising' },
+          { label: 'Avoid direct contact with customers' },
         ],
       },
     ],
