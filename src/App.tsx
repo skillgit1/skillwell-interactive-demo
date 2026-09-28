@@ -5,12 +5,10 @@ import type { MapContent, NodeState } from './lib/types'
 import { personalize, getQuestions, minutesSaved } from './lib/personalize'
 import type { IntroAnswers } from './lib/personalize'
 import { LearningMap } from './components/LearningMap'
-import { IntroFlow } from './components/IntroFlow'
 import { AutoInsightsReport } from './components/AutoInsightsReport'
 import { restoreConsent } from './lib/posthog'
 import { Logo } from './components/Logo'
 import { DesktopOnboarding } from './components/DesktopOnboarding'
-import { useIsDesktop } from './lib/useIsDesktop'
 import rawMap from './content/map.json'
 
 const baseMap = rawMap as unknown as MapContent
@@ -189,9 +187,6 @@ export default function App() {
   const questions = useMemo(() => getQuestions(answers), [answers])
   const { scenario } = map
   const introActive = intro.phase === 'active'
-  // Desktop gets the split-screen onboarding (map beside the questions);
-  // mobile keeps the full-screen intro modal. Staging-only experiment.
-  const isDesktop = useIsDesktop()
 
   const verifiedCount = map.nodes.filter((n) => n.state === 'verified').length
   const saved = minutesSaved(map)
@@ -220,10 +215,9 @@ export default function App() {
 
       {/* Everything below blurs while the intro flow is up */}
       <div className="relative flex-1">
-        {introActive && isDesktop ? (
+        {introActive ? (
           <DesktopOnboarding onDone={finishIntro} />
         ) : (
-        <>
         <main
           className={`mx-auto w-full max-w-6xl px-4 py-4 transition-all duration-500 sm:px-6 sm:py-6 ${
             introActive ? 'pointer-events-none blur-md brightness-95' : ''
@@ -311,11 +305,6 @@ export default function App() {
             </div>
           </section>
         </main>
-
-        {/* Intro flow overlay — consent is granted here on first interaction
-            (see the fine print on the welcome card). */}
-        {introActive && <IntroFlow onDone={finishIntro} />}
-        </>
         )}
 
         {/* Step 4: admin auto-insights report */}

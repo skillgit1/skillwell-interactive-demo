@@ -34,17 +34,21 @@ export function PreviewMap({
   content,
   adaptingLabel,
   onBlockedInteract,
+  initialTransform = { x: 40, y: 40, scale: 0.6 },
 }: {
   content: MapContent
   /** "Adapting to Healthcare…" flash shown briefly after each answer. */
   adaptingLabel: string | null
   /** Fired when the visitor tries to click a node before finishing onboarding. */
   onBlockedInteract: () => void
+  /** Starting pan/zoom. Small screens use a lower scale so more of the map (and
+   *  its adaptation) is visible in a short preview. */
+  initialTransform?: { x: number; y: number; scale: number }
 }) {
   const { nodes } = content
   const byId = useMemo(() => Object.fromEntries(nodes.map((n) => [n.id, n])), [nodes])
   const canvasRef = useRef<HTMLDivElement>(null)
-  const { t, dragging, handlers } = usePanZoom({ x: 40, y: 40, scale: 0.6 }, WORLD)
+  const { t, dragging, handlers } = usePanZoom(initialTransform, WORLD)
 
   const controls = useAnimationControls()
   const [sweep, setSweep] = useState(0)

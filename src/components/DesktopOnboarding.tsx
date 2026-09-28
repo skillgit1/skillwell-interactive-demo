@@ -13,6 +13,7 @@ import { track } from '../lib/track'
 import { grantConsent } from '../lib/posthog'
 import { moderateUpload } from '../lib/moderateUpload'
 import { buildPreviewMap, industryLabelFor } from '../lib/previewEngine'
+import { useIsDesktop } from '../lib/useIsDesktop'
 import { Icon } from './Icon'
 import { PreviewMap } from './PreviewMap'
 
@@ -48,6 +49,7 @@ export function DesktopOnboarding({
   const fileInput = useRef<HTMLInputElement>(null)
   const consented = useRef(false)
   const shake = useAnimationControls()
+  const isDesktop = useIsDesktop()
 
   const previewContent = useMemo(() => buildPreviewMap(industry, training), [industry, training])
 
@@ -145,11 +147,13 @@ export function DesktopOnboarding({
   const trainings = trainingsFor(industry)
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] w-full">
-      {/* Left rail: the personalization questions */}
+    // Mobile: questions on top, a small live-preview map below. Desktop: the
+    // questions on the left, the map filling the right.
+    <div className="flex h-[calc(100dvh-3.5rem)] w-full flex-col lg:flex-row">
+      {/* Questions: top on mobile, left rail on desktop */}
       <motion.aside
         animate={shake}
-        className="flex w-[380px] shrink-0 flex-col overflow-y-auto border-r border-line bg-panel px-6 py-7"
+        className="flex w-full flex-1 flex-col overflow-y-auto border-b border-line bg-panel px-5 py-5 lg:w-[380px] lg:flex-none lg:border-b-0 lg:border-r lg:px-6 lg:py-7"
       >
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Skillwell Preview Demo</p>
 
@@ -305,9 +309,14 @@ export function DesktopOnboarding({
         )}
       </motion.aside>
 
-      {/* Right: the live preview map */}
-      <div className="relative flex-1">
-        <PreviewMap content={previewContent} adaptingLabel={adaptingLabel} onBlockedInteract={nudge} />
+      {/* The live preview map: a small strip below on mobile, filling the right on desktop */}
+      <div className="relative h-[34vh] shrink-0 lg:h-auto lg:flex-1">
+        <PreviewMap
+          content={previewContent}
+          adaptingLabel={adaptingLabel}
+          onBlockedInteract={nudge}
+          initialTransform={isDesktop ? { x: 40, y: 40, scale: 0.6 } : { x: 14, y: 24, scale: 0.32 }}
+        />
       </div>
     </div>
   )
