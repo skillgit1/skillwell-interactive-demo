@@ -189,6 +189,16 @@ export default function App() {
   const questions = useMemo(() => getQuestions(answers), [answers])
   const { scenario } = map
   const introActive = intro.phase === 'active'
+  // /he is a VARIATION of this same demo (same codebase, same PostHog project),
+  // not a separate app. The ONLY /he-specific behavior is locking onboarding to
+  // Higher Education + its welcome copy; everything else is shared, so /he keeps
+  // pace with the primary demo automatically. The demo_variant super property
+  // (see lib/posthog.ts) segments /he traffic inside the main PostHog project.
+  const lockIndustry =
+    typeof window !== 'undefined' &&
+    window.location.pathname.split('/').filter(Boolean).includes('he')
+      ? 'highered'
+      : undefined
 
   const verifiedCount = map.nodes.filter((n) => n.state === 'verified').length
   const saved = minutesSaved(map)
@@ -218,7 +228,7 @@ export default function App() {
       {/* Everything below blurs while the intro flow is up */}
       <div className="relative flex-1">
         {introActive ? (
-          <DesktopOnboarding onDone={finishIntro} />
+          <DesktopOnboarding onDone={finishIntro} lockIndustry={lockIndustry} />
         ) : (
         <main
           className={`mx-auto w-full max-w-6xl px-4 py-4 transition-all duration-500 sm:px-6 sm:py-6 ${

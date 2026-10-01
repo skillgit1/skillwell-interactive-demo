@@ -23,6 +23,17 @@ const CONSENT_KEY = 'sw_consent'
 const TRACKING_DISABLED =
   typeof window !== 'undefined' && window.location.pathname.startsWith('/staging')
 
+/**
+ * Which entry of this demo the visitor landed on. /he is the higher-ed entry
+ * (tryskillwell.com/he); everything else is the primary demo. Same domain, same
+ * PostHog project, same person cookie, so /he still rolls up into the overall
+ * numbers — this just lets you FILTER or BREAK DOWN by entry inside PostHog.
+ */
+function demoVariant(): 'he' | 'primary' {
+  if (typeof window === 'undefined') return 'primary'
+  return window.location.pathname.split('/').filter(Boolean).includes('he') ? 'he' : 'primary'
+}
+
 export function initPostHog() {
   if (TRACKING_DISABLED || started || typeof window === 'undefined') return
   started = true
@@ -33,6 +44,12 @@ export function initPostHog() {
     person_profiles: 'identified_only', // no person profile until identify()
     cross_subdomain_cookie: true, // link tryskillwell.com <-> preview.tryskillwell.com
   })
+
+  // Tag every event (custom, autocapture, and all but the very first $pageview)
+  // with the entry so /he is one filter away in PostHog. Registered as a super
+  // property, so nothing downstream has to pass it. The initial $pageview is
+  // still distinguishable by its $current_url (/he), so no /he visit is missed.
+  posthog.register({ demo_variant: demoVariant() })
 
   // Route all of our typed events through PostHog (only sends once consented).
   setAnalyticsSink({ capture: (event, props) => posthog.capture(event, props) })

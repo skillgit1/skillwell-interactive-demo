@@ -4,20 +4,24 @@ import { AnimatePresence, motion, useAnimationControls } from 'framer-motion'
 import {
   INDUSTRIES,
   HIGHER_ED_INDUSTRY,
+  HE_WELCOME,
   trainingsFor,
   findIndustry,
   findTraining,
+  setUploadContent,
+  UPLOAD_TRAINING_ID,
 } from '../lib/personalize'
 import type { IntroAnswers } from '../lib/personalize'
 import { track } from '../lib/track'
 import { grantConsent } from '../lib/posthog'
 import { moderateUpload } from '../lib/moderateUpload'
+import { analyzeUpload } from '../lib/aiUpload'
 import { buildPreviewMap, industryLabelFor } from '../lib/previewEngine'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { Icon } from './Icon'
 import { PreviewMap } from './PreviewMap'
 
-type Step = 'industry' | 'training' | 'upload' | 'flagged' | 'building'
+type Step = 'welcome' | 'industry' | 'training' | 'upload' | 'flagged' | 'building'
 
 const BUILD_STEPS = [
   'Locking in your learning map',
@@ -34,11 +38,15 @@ const BUILD_STEPS = [
  */
 export function DesktopOnboarding({
   onDone,
+  lockIndustry,
 }: {
   onDone: (answers: IntroAnswers | null) => void
+  /** When set (the /he higher-ed entry), skip the industry question and open on
+   *  a higher-ed welcome, then the course picker, locked to this industry. */
+  lockIndustry?: string
 }) {
-  const [step, setStep] = useState<Step>('industry')
-  const [industry, setIndustry] = useState<string | null>(null)
+  const [step, setStep] = useState<Step>(lockIndustry ? 'welcome' : 'industry')
+  const [industry, setIndustry] = useState<string | null>(lockIndustry ?? null)
   const [training, setTraining] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [flagMessage, setFlagMessage] = useState('')
@@ -46,6 +54,7 @@ export function DesktopOnboarding({
   const [hint, setHint] = useState(false)
   const [stage, setStage] = useState(0)
   const [dragOver, setDragOver] = useState(false)
+  const [aiInFlight, setAiInFlight] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const consented = useRef(false)
   const shake = useAnimationControls()
@@ -78,12 +87,16 @@ export function DesktopOnboarding({
       fileName,
     }
     if (stage < BUILD_STEPS.length) {
+      // While the AI reads the uploaded file, hold on the last build step so we
+      // never show "ready" before the generated map is in.
+      if (aiInFlight && stage >= BUILD_STEPS.length - 1) return
       const id = window.setTimeout(() => setStage((s) => s + 1), 900)
       return () => window.clearTimeout(id)
     }
+    if (aiInFlight) return // the AI path calls onDone() itself when it resolves
     const id = window.setTimeout(() => onDone(answers), 1100)
     return () => window.clearTimeout(id)
-  }, [step, stage, industry, training, fileName, onDone])
+  }, [step, stage, industry, training, fileName, onDone, aiInFlight])
 
   const pickIndustry = (id: string) => {
     ensureConsent()
@@ -128,8 +141,24 @@ export function DesktopOnboarding({
     }
     setFileName(f.name)
     track('content_uploaded', { file_type: fileType, file_size_kb: Math.round(f.size / 1024) })
-    track('intro_completed', completeProps(true))
     setStep('building')
+    // Local AI (dev only): read the actual file and build the map from it. Falls
+    // back to the chosen topic if there's no key / not a dev build / any error.
+    setAiInFlight(true)
+    analyzeUpload(f)
+      .then((ai) => {
+        setUploadContent(ai)
+        track('intro_completed', { ...completeProps(true), ai_personalized: !!ai })
+        onDone({
+          industry: industry ?? 'other',
+          training: ai ? UPLOAD_TRAINING_ID : training ?? 'leadership',
+          fileName: f.name,
+        })
+      })
+      .catch(() => {
+        setUploadContent(null)
+        onDone({ industry: industry ?? 'other', training: training ?? 'leadership', fileName: f.name })
+      })
   }
 
   const finishWithoutFile = () => {
@@ -159,6 +188,24 @@ export function DesktopOnboarding({
 
         <div className="mt-5 flex-1">
           <AnimatePresence mode="wait">
+            {step === 'welcome' && (
+              <StepShell key="welcome" kicker={HE_WELCOME.eyebrow} title={HE_WELCOME.headline} sub={HE_WELCOME.description}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    ensureConsent()
+                    setStep('training')
+                  }}
+                  className="w-full rounded-btn bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+                >
+                  Personalize my demo
+                </button>
+                <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-ink-soft">
+                  <svg viewBox="0 0 24 24" className="size-4 text-oasis" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                  No account or card needed
+                </p>
+              </StepShell>
+            )}
             {step === 'industry' && (
               <StepShell key="industry" kicker="Question 1 of 2" title="What industry are you in?" sub="Skillwell powers learning in every industry. Pick yours and watch the map adapt.">
                 <div className="grid grid-cols-2 gap-2.5">
@@ -186,7 +233,7 @@ export function DesktopOnboarding({
             {step === 'training' && (
               <StepShell
                 key="training"
-                kicker="Question 2 of 2"
+                kicker={lockIndustry ? 'Higher Education' : 'Question 2 of 2'}
                 title={industry === 'highered' ? 'Which course do you want to see?' : 'What kind of training do you want to see?'}
                 sub={industry === 'highered' ? 'Common courses institutions run on Skillwell.' : 'If you can teach it, Skillwell can build and adapt it.'}
               >
@@ -199,7 +246,7 @@ export function DesktopOnboarding({
             )}
 
             {step === 'upload' && (
-              <StepShell key="upload" kicker="Optional, but this is the magic" title="Have existing training content?" sub="Drop in a manual, syllabus, or course doc. It stays in your browser, never uploaded.">
+              <StepShell key="upload" kicker="Optional, but this is the magic" title="Have existing training content?" sub="Drop in a manual, syllabus, or course doc, and Skillwell reads it and builds your adaptive map.">
                 <input
                   ref={fileInput}
                   type="file"
@@ -228,7 +275,7 @@ export function DesktopOnboarding({
                     <Icon name="clipboard" className="size-5" />
                   </span>
                   <span className="mt-1 text-sm font-bold text-ink">Drop your document or click to browse</span>
-                  <span className="text-xs text-ink-muted">Stays in your browser, never uploaded</span>
+                  <span className="text-xs text-ink-muted">Skillwell reads your content to build the map</span>
                 </button>
                 <button
                   type="button"

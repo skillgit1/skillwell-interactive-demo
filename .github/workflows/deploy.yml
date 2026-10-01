@@ -30,15 +30,22 @@ jobs:
         with:
           node-version: 20
 
-      # ---- Production (main) -> site root -------------------------------
-      # Relative base keeps assets working at both the apex and the /staging/
-      # subpath without hardcoding a path.
+      # ---- Production (main) -> site root and /he -----------------------
+      # Relative base keeps assets working at the apex and any subpath. The SAME
+      # production build is also served at /he, where the app reads the path and
+      # opens the higher-ed-locked onboarding (see App.tsx lockIndustry). /he is
+      # noindex: a short-term, audience-specific entry, not for search.
       - name: Build production (main)
         run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/main:refs/remotes/origin/main
           git checkout --force origin/main
           npm ci
-          npx vite build --base=./ --outDir _site
+          npx vite build --base=./ --outDir _prod
+          rm -rf _site && mkdir -p _site
+          cp -R _prod/. _site/
+          mkdir -p _site/he
+          cp -R _prod/. _site/he/
+          sed -i 's#<head>#<head><meta name="robots" content="noindex, nofollow">#' _site/he/index.html
 
       # ---- Staging branch -> /staging/ subpath --------------------------
       # Only if the branch exists. Built into a temp dir first, then copied,

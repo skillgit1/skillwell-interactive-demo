@@ -54,6 +54,14 @@ export const HIGHER_ED_INDUSTRY: Industry = {
   higherEd: true,
 }
 
+/** Welcome copy for the higher-ed entry (tryskillwell.com/he). */
+export const HE_WELCOME = {
+  eyebrow: 'Skillwell for Higher Education',
+  headline: 'Your courses. Your students. Adapted to every learner.',
+  description:
+    'Skillwell turns your existing course content and LMS into a fully adaptive, immersive learning environment. It spots struggling students early, lowers DFW rates, and adapts to every learner in real time, so they stay enrolled and on track to graduate.',
+}
+
 /**
  * A selectable training. `engine` points at one of the four fully-authored
  * content sets (leadership/onboarding/compliance/sales); new course types
@@ -178,7 +186,7 @@ export function engineFor(trainingId: string): string {
   return findTraining(trainingId)?.engine ?? 'leadership'
 }
 
-interface TrainingContent {
+export interface TrainingContent {
   group: string
   course: string
   description: string
@@ -782,7 +790,16 @@ const TRAINING_CONTENT: Record<string, TrainingContent> = {
   },
 }
 
+/** Content generated from an uploaded document (the local AI upload path).
+ *  Set by setUploadContent(); used when the training id is '__upload__'. */
+let uploadOverride: TrainingContent | null = null
+export const UPLOAD_TRAINING_ID = '__upload__'
+export function setUploadContent(content: TrainingContent | null) {
+  uploadOverride = content
+}
+
 function engineContentFor(trainingId: string | null): TrainingContent {
+  if (trainingId === UPLOAD_TRAINING_ID && uploadOverride) return uploadOverride
   const id = trainingId ?? ''
   // Prefer content authored for the exact topic; fall back to its engine.
   return TRAINING_CONTENT[id] ?? TRAINING_CONTENT[engineFor(id)] ?? TRAINING_CONTENT.leadership
